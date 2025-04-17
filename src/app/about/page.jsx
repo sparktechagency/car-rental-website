@@ -1,34 +1,38 @@
 // pages/about.js
 "use client"
 import { Button, Card, Col, Row, Typography } from 'antd';
-import { 
-  EnvironmentOutlined, 
-  CarOutlined, 
-  ShopOutlined, 
-  CustomerServiceOutlined, 
-  PlayCircleOutlined 
+import {
+  EnvironmentOutlined,
+  CarOutlined,
+  ShopOutlined,
+  CustomerServiceOutlined,
+  PlayCircleOutlined
 } from '@ant-design/icons';
 import Head from 'next/head';
+import CustomBanner from '@/components/CustomBanner';
+import { CiLocationOn } from "react-icons/ci";
 
 const { Title, Paragraph } = Typography;
 
 export default function About() {
   return (
     <div className="bg-gray-50">
+      <CustomBanner title={"About Us"} breadcrumbs={[  { label: "Home", href: "/" },
+          { label: "About us" , href:"/about" }]} />
       <Head>
         <title>About Us - The Lux Auto</title>
         <meta name="description" content="Learn more about The Lux Auto chauffeur services" />
       </Head>
 
-      {/* Hero Section */}
-      <div className="relative w-full">
-        <div className="container mx-auto px-4 py-8 md:px-6 lg:px-8">
+      <div className="container mx-auto px-4 py-8 md:px-6 lg:px-8">
+        {/* Hero Section */}
+        <div className="relative w-full mb-16">
           <div className="flex flex-col md:flex-row items-center gap-8">
             <div className="md:w-1/2">
               <img
-                src="/api/placeholder/340/200" 
+                src="/images/aboutpage1.png"
                 alt="The Lux Auto chauffeurs"
-                className="rounded-lg shadow-md"
+                className="rounded-lg shadow-md w-full"
               />
             </div>
             <div className="md:w-1/2">
@@ -47,97 +51,119 @@ export default function About() {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Video Section */}
-      <div className="py-12 bg-gray-100">
-        <div className="container mx-auto px-4">
-          <div className="relative">
-            <img 
-              src="/api/placeholder/800/400" 
-              alt="Luxury car on the road"
-              className="w-full rounded-lg shadow-xl"
-            />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Button 
-                icon={<PlayCircleOutlined />} 
-                type="primary" 
-                shape="circle" 
-                size="large"
-                className="w-16 h-16 flex items-center justify-center bg-yellow-400 hover:bg-yellow-500 border-0"
+        {/* Video Section */}
+        {/* code video section */}
+
+        {/* Features Grid */}
+        <div className="mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-16">
+            {/* First car image */}
+            <div className="relative overflow-hidden rounded-lg shadow-lg">
+              <img
+                src="/images/aboutPage2.png"
+                alt="Luxury Mercedes G-Class"
+                className="w-full h-full object-cover"
               />
+              <div className="absolute inset-0 bg-opacity-20 flex items-end">
+                <div className="p-4 text-white">
+                  <h3 className="font-bold">Mercedes G-Class</h3>
+                  <p className="text-sm">Premium chauffeur service</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Second car image */}
+            <div className="relative overflow-hidden rounded-lg shadow-lg">
+              <img
+                src="/images/aboutPage2.png"
+                alt="Luxury Porsche Cayenne"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-opacity-20 flex items-end">
+                <div className="p-4 text-white">
+                  <h3 className="font-bold">Porsche Cayenne</h3>
+                  <p className="text-sm">Executive transport</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Third column with split content */}
+            <div className="flex flex-col gap-4">
+              {/* 10 Years banner */}
+              <div className="bg-green-500 rounded-lg p-6 flex items-center justify-center shadow-lg">
+                <div className="text-white text-center">
+                  <div className="flex items-baseline">
+                    <span className="text-6xl font-bold">10</span>
+                    <div className="ml-2 text-left">
+                      <div className="text-2xl font-bold">YEARS</div>
+                      <div className="text-2xl font-bold">IN BUSINESS</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bentley image */}
+              <div className="relative overflow-hidden rounded-lg shadow-lg flex-grow">
+                <img
+                  src="/images/aboutCar.png"
+                  alt="Luxury Bentley Continental"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-opacity-20 flex items-end">
+                  <div className="p-4 text-white">
+                    <h3 className="font-bold">Bentley Continental</h3>
+                    <p className="text-sm">VIP experience</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Features Grid */}
-      <div className="py-16">
-        <div className="container mx-auto px-4">
-          <Row gutter={[24, 24]} className="mb-12">
-            <Col xs={24} md={8}>
-              <Card 
-                cover={<img alt="Mercedes car" src="/api/placeholder/300/200" className="h-56 object-cover" />}
-                bordered={false}
-                className="h-full shadow-md hover:shadow-lg transition-shadow"
-              />
-            </Col>
-            <Col xs={24} md={8}>
-              <Card 
-                cover={<img alt="Chauffeur with car" src="/api/placeholder/300/200" className="h-56 object-cover" />}
-                bordered={false}
-                className="h-full shadow-md hover:shadow-lg transition-shadow"
-              />
-            </Col>
-            <Col xs={24} md={8}>
-              <Card 
-                className="h-full bg-green-500 text-white flex flex-col items-center justify-center p-8 shadow-md"
-                bordered={false}
-              >
-                <Title level={1} className="text-6xl font-bold mb-2 text-white">10</Title>
-                <div className="text-center">
-                  <Title level={4} className="text-white m-0">YEARS</Title>
-                  <Title level={4} className="text-white m-0">IN BUSINESS</Title>
-                </div>
-              </Card>
-            </Col>
-          </Row>
 
           {/* Service Features */}
           <Row gutter={[24, 24]} className="mt-16">
             <Col xs={24} sm={12} md={6}>
               <Card className="text-center h-full border-0 shadow-md hover:shadow-lg transition-shadow">
-                <EnvironmentOutlined className="text-4xl text-green-500 mb-4" />
-                <Title level={5} className="font-bold mb-2">MORE LOCATIONS</Title>
+                <div className='bg-green-500 w-20 h-20 flex items-center justify-center rounded-full mx-auto'>
+                  <CiLocationOn className="text-4xl text-white" />
+                </div>
+                <Title level={5} className="font-bold mb-2 mt-4">MORE LOCATIONS</Title>
                 <Paragraph className="text-gray-600">
                   Rent from multiple convenient locations.
                 </Paragraph>
               </Card>
+
             </Col>
             <Col xs={24} sm={12} md={6}>
-              <Card className="text-center h-full border-0 shadow-md hover:shadow-lg transition-shadow">
-                <CarOutlined className="text-4xl text-green-500 mb-4" />
-                <Title level={5} className="font-bold mb-2">AIRPORT DELIVERY</Title>
+            <Card className="text-center h-full border-0 shadow-md hover:shadow-lg transition-shadow">
+                <div className='bg-green-500 w-20 h-20 flex items-center justify-center rounded-full mx-auto'>
+                  <CiLocationOn className="text-4xl text-white" />
+                </div>
+                <Title level={5} className="font-bold mb-2 mt-4">airport delivery</Title>
                 <Paragraph className="text-gray-600">
-                  Direct delivery to the airport.
+                Direct delivery to the airport.
                 </Paragraph>
               </Card>
             </Col>
             <Col xs={24} sm={12} md={6}>
-              <Card className="text-center h-full border-0 shadow-md hover:shadow-lg transition-shadow">
-                <ShopOutlined className="text-4xl text-green-500 mb-4" />
-                <Title level={5} className="font-bold mb-2">CURBSIDE DELIVERY</Title>
+            <Card className="text-center h-full border-0 shadow-md hover:shadow-lg transition-shadow">
+                <div className='bg-green-500 w-20 h-20 flex items-center justify-center rounded-full mx-auto'>
+                <CiLocationOn className="text-4xl text-white" />
+                </div>
+                <Title level={5} className="font-bold mb-2 mt-4">curbside delivery</Title>
                 <Paragraph className="text-gray-600">
-                  Quick drop-off service curbside.
+                Quick drop-off at the curbside.
                 </Paragraph>
               </Card>
             </Col>
             <Col xs={24} sm={12} md={6}>
-              <Card className="text-center h-full border-0 shadow-md hover:shadow-lg transition-shadow">
-                <CustomerServiceOutlined className="text-4xl text-green-500 mb-4" />
-                <Title level={5} className="font-bold mb-2">24/7 SUPPORT</Title>
+            <Card className="text-center h-full border-0 shadow-md hover:shadow-lg transition-shadow">
+                <div className='bg-green-500 w-20 h-20 flex items-center justify-center rounded-full mx-auto'>
+                <CiLocationOn className="text-4xl text-white" />
+                </div>
+                <Title level={5} className="font-bold mb-2 mt-4">24/7 support</Title>
                 <Paragraph className="text-gray-600">
-                  Assistance available anytime.
+                Assistance available anytime.
                 </Paragraph>
               </Card>
             </Col>

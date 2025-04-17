@@ -13,6 +13,11 @@ const Navbar = () => {
     if (e.keyPath.length === 1) {
       setCurrent(e.key);
     }
+    // Close drawer when any navlink is clicked
+    if (window.innerWidth < 992) { // 992px is lg breakpoint
+      setDrawerOpen(false);
+      setOpenSubMenu(null);
+    }
   };
 
   const toggleSubMenu = (menuKey) => {
@@ -43,9 +48,10 @@ const Navbar = () => {
 
   // Desktop menu items
   const desktopMenuItems = [
-    { key: 'home', label: 'HOME' },
-    { key: 'fleet', label: 'FLEET' },
-    { key: 'booking', label: 'MY BOOKING' },
+    { key: 'home', label: 'HOME', path: "/" },
+    { key: 'fleet', label: 'FLEET', path: "/fleet" },
+    { key: 'reservation', label: 'RESERVATION', path: "/reservation" },
+    { key: 'booking', label: 'MY BOOKING', path: "/booking" },
     { 
       key: 'partner', 
       label: (
@@ -89,10 +95,10 @@ const Navbar = () => {
     >
       <Menu.Item 
         key={item.key} 
-        className={isSubItem ? 'pl-8' : ''}
+        className={`${isSubItem ? 'pl-8' : ''} text-base`}
         onClick={() => {
           handleClick({ key: item.key, keyPath: [item.key] });
-          if (!isSubItem) onClose();
+          if (!isSubItem && !item.children) onClose();
         }}
       >
         {item.path ? <Link href={item.path}>{item.label}</Link> : item.label}
@@ -106,7 +112,7 @@ const Navbar = () => {
         className="flex justify-between items-center px-4 py-3 cursor-pointer"
         onClick={() => toggleSubMenu(menuKey)}
       >
-        <span className="font-medium">{title}</span>
+        <span className="font-medium text-base">{title}</span>
         {openSubMenu === menuKey ? <UpOutlined /> : <DownOutlined />}
       </div>
       <AnimatePresence>
@@ -141,33 +147,53 @@ const Navbar = () => {
   );
 
   return (
-    <div className="bg-white shadow-sm">
-      <div className="container mx-auto flex items-center justify-between py-4">
-        {/* Logo */}
+    <div className="bg-white shadow-sm sticky top-0 z-50">
+      <div className="container mx-auto px-4 flex items-center justify-between py-3 md:py-4">
+        {/* Logo - responsive sizing */}
         <Link href={'/'} className="flex items-center cursor-pointer">
-          <img src="/images/logo.png" alt="Logo" className="h-8 md:h-10" />
+          <img 
+            src="/images/logo.png" 
+            alt="Logo" 
+            className="h-7 sm:h-8 md:h-9 lg:h-10" 
+          />
         </Link>
-
-        {/* Desktop Navigation Menu - hidden on mobile */}
-        <Space size="large" className="hidden lg:flex">
+        <div className='hidden sm:flex items-center'>
           <Menu 
             mode="horizontal" 
-            style={{ fontWeight: "600" }}
+            style={{ fontWeight: "600", fontSize: "15px" }}
             selectedKeys={[current]} 
             onClick={handleClick}
             className="border-none"
-            items={desktopMenuItems}
-          />
-        </Space>
+          >
+            {desktopMenuItems.map(item => (
+              item.children ? (
+                <Menu.SubMenu key={item.key} title={item.label}>
+                  {item.children.map(child => (
+                    <Menu.Item key={child.key}>
+                      {child.label}
+                    </Menu.Item>
+                  ))}
+                </Menu.SubMenu>
+              ) : (
+                <Menu.Item key={item.key}>
+                  {item.path ? <Link href={item.path}>{item.label}</Link> : item.label}
+                </Menu.Item>
+              )
+            ))}
+          </Menu>
+        </div>
 
-        {/* Contact Button - hidden on mobile */}
-        <div className="hidden md:block">
+        {/* Desktop Navigation Menu - hidden on mobile */}
+        <div className="hidden lg:flex items-center">
           <Button 
             type="primary" 
             size="large"
-            className="font-semibold"
-            style={{ width: 160 }}
-            onClick={() => setCurrent('contact')}
+            className="font-semibold text-sm md:text-base ml-4"
+            style={{ minWidth: 140 }}
+            onClick={() => {
+              setCurrent('contact');
+              handleClick({ key: 'contact', keyPath: ['contact'] });
+            }}
           >
             CONTACT US
           </Button>
@@ -177,9 +203,9 @@ const Navbar = () => {
         <div className="lg:hidden">
           <Button 
             type="text" 
-            icon={<MenuOutlined />} 
+            icon={<MenuOutlined style={{ fontSize: '24px' }} />} 
             onClick={showDrawer}
-            style={{ fontSize: '20px' }}
+            className="flex items-center justify-center w-10 h-10"
           />
         </div>
 
@@ -187,30 +213,32 @@ const Navbar = () => {
         <Drawer
           title={
             <div className="flex items-center">
-              <img src="/images/logo.png" alt="Logo" className="h-8" />
+              <img src="/images/logo.png" alt="Logo" className="h-7" />
             </div>
           }
           placement="right"
           closable={true}
           onClose={onClose}
           open={drawerOpen}
-          width={300}
+          width={280}
           className="mobile-nav-drawer"
           styles={{
-            body: { padding: 0 }
+            body: { padding: 0 },
+            header: { padding: '16px 20px' }
           }}
         >
           <div className="flex flex-col h-full">
-            <div className="flex-grow">
+            <div className="flex-grow overflow-y-auto">
               <Menu 
                 onClick={handleClick} 
                 selectedKeys={[current]} 
                 mode="vertical"
                 className="border-none"
               >
-                <MobileMenuItem item={{ key: 'home', label: 'HOME' }} />
-                <MobileMenuItem item={{ key: 'fleet', label: 'FLEET' }} />
-                <MobileMenuItem item={{ key: 'booking', label: 'MY BOOKING' }} />
+                <MobileMenuItem item={{ key: 'home', label: 'HOME', path: "/" }} />
+                <MobileMenuItem item={{ key: 'fleet', label: 'FLEET', path: "/fleet" }} />
+                <MobileMenuItem item={{ key: 'reservation', label: 'RESERVATION', path: "/reservation" }} />
+                <MobileMenuItem item={{ key: 'booking', label: 'MY BOOKING', path: "/booking" }} />
                 
                 <MobileSubMenu 
                   title="BECOME A PARTNER" 
@@ -230,15 +258,16 @@ const Navbar = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="p-4"
+              className="p-4 border-t border-gray-100"
             >
               <Button 
                 type="primary" 
                 block 
                 size="large"
-                className="font-semibold"
+                className="font-semibold text-base"
                 onClick={() => {
                   setCurrent('contact');
+                  handleClick({ key: 'contact', keyPath: ['contact'] });
                   onClose();
                 }}
               >
