@@ -1,6 +1,6 @@
 // pages/booking-extras.js
 "use client";
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Button,
     Card
@@ -20,6 +20,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 const ChildSeatCard = ({ title, description, price }) => {
+    const [add , setAdd] = useState(false)
+   
     
     return (
         <Card className="h-full">
@@ -49,12 +51,14 @@ const ChildSeatCard = ({ title, description, price }) => {
                             <p className="text-green-500 font-bold text-base">₦ {price}</p>
                         </div>
                         <Button
-                        onClick={()=> router.push('/booking-extras')}
+                        onClick={()=> setAdd(prev=>!prev)}
                             type="primary"
                             className="bg-yellow-400 hover:bg-yellow-500 border-yellow-400 hover:border-yellow-500 text-gray-900 font-medium"
                             size="small"
                         >
-                            ADD
+                            {
+                                add ? "ADD" :"ADDED"
+                            }
                         </Button>
                     </div>
                     <Button type="link" className="text-xs p-0 mt-2 text-gray-500">More info</Button>
@@ -66,6 +70,7 @@ const ChildSeatCard = ({ title, description, price }) => {
 
 const AddonCard = ({ icon, title, description, price, isFree }) => {
     const router = useRouter();
+    const [add , setAdd] = useState(false)
     return (
         <div className='border border-gray-300 p-3 rounded-md shadow h-full'>
             <div className="flex flex-col h-full">
@@ -90,12 +95,14 @@ const AddonCard = ({ icon, title, description, price, isFree }) => {
                             <p className="text-green-500 font-bold text-base">₦ {price}</p>
                         </div>
                         <Button
-                        onClick={()=>router.push('/checkout')}
+                         onClick={()=> setAdd(prev=>!prev)}
                             className="Vehicles"
                             size='middle'
                             style={{width:"100px", height:"35px"}}
                         >
-                            ADD
+                            {
+                            add ? "ADDED":"ADD"
+                           }
                         </Button>
                     </div>
                 </div>
@@ -105,6 +112,7 @@ const AddonCard = ({ icon, title, description, price, isFree }) => {
 };
 
 export default function BookingExtras() {
+    const router = useRouter();
     // Define addons data
     const addons = [
         {
@@ -285,7 +293,7 @@ export default function BookingExtras() {
                     </div>
 
                     <div className="flex justify-end mt-6">
-                        <Button type="primary" className="bg-green-500 border-green-500 hover:bg-green-600" size="large">
+                        <Button onClick={()=>router.push('/checkout')} type="primary" className="bg-green-500 border-green-500 hover:bg-green-600" size="large">
                             Continue Booking
                         </Button>
                     </div>

@@ -26,10 +26,7 @@ const Hero = () => {
     <div className="relative w-full min-h-[600px] md:h-[800px]">
       {/* Background image container */}
       <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: 'url(/images/hero.png)' }} />
-      
-      {/* Overlay for better text visibility */}
-      {/* <div className="absolute inset-0 bg-black bg-opacity-40" /> */}
-      
+
       {/* Content */}
       <div className="container mx-auto px-4 sm:px-6 relative z-10 flex flex-col lg:flex-row items-center justify-center lg:justify-between w-full h-full py-12 lg:py-0">
         {/* Left side - Hero text */}

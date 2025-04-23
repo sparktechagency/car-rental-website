@@ -32,6 +32,7 @@ export default function Checkout() {
   
     const onFinish = (values) => {
       console.log('Form values:', values);
+   router.push('/BookingConfirmation')
       // Process form submission here
     };
 
@@ -308,7 +309,7 @@ export default function Checkout() {
                 </Button>
                 
                 <Button 
-                onClick={()=> router.push('/BookingConfirmation')}
+               
                   type="primary" 
                   htmlType="submit"
                   className="bg-green-500 flex items-center justify-center sm:justify-start order-1 sm:order-2"

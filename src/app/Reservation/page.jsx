@@ -139,9 +139,9 @@ export default function CarRental() {
                             <h3 className="font-bold mb-2">Price:</h3>
                             <Slider
                                 range
-                                defaultValue={[55000, 399999]}
-                                min={0}
-                                max={500000}
+                                defaultValue={[50, 500]}
+                                min={50}
+                                max={500}
                                 trackStyle={[{ backgroundColor: '#10B981' }]}
                                 handleStyle={[
                                     { borderColor: '#10B981', backgroundColor: '#10B981' },
@@ -149,8 +149,8 @@ export default function CarRental() {
                                 ]}
                             />
                             <div className="flex justify-between mt-2">
-                                <span>₦ 55,000.00</span>
-                                <span>₦ 399,999.99</span>
+                                <span>$50</span>
+                                <span>$ 500</span>
                             </div>
                         </div>
 
