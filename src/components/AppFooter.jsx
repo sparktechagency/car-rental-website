@@ -1,4 +1,4 @@
-// Footer.jsx
+"use client";
 import React from 'react';
 import { Layout, Typography, Space, Row, Col } from 'antd';
 import { PhoneOutlined, MessageOutlined, MailOutlined } from '@ant-design/icons';
@@ -10,7 +10,7 @@ const { Title, Text } = Typography;
 
 const AppFooter = () => {
   return (
-    <Footer style={{backgroundColor:"#101A12" , color:"fffff"}} className="p-0 bg-[#101A12] text-white">
+    <Footer style={{backgroundColor:"#101A12" , color:"#ffffff"}} className="p-0 bg-[#101A12] text-white">
       <div className="max-w-7xl mx-auto py-16 px-4">
         <Row gutter={[48, 24]} className="mb-12">
           <Col xs={24} sm={24} md={8} lg={8}>

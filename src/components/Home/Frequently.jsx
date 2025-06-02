@@ -4,8 +4,6 @@ import { Collapse, Button } from 'antd';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const { Panel } = Collapse;
-
 export default function Frequently() {
   const [activeKey, setActiveKey] = useState(['1']);
   const [showAll, setShowAll] = useState(false);
@@ -16,38 +14,101 @@ export default function Frequently() {
   const faqItems = [
     {
       key: '1',
-      question: 'Where are your pick up locations?',
-      answer: 'Our vehicles are usually located inside the International Airport in Ikeja Lagos or at our Lekki VI office. However, as we offer strictly chauffeur services, we can pick you up at any location of your convenience.'
+      label: 'Where are your pick up locations?',
+      children: (
+        <motion.p 
+          className="text-gray-600 py-2"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          Our vehicles are usually located inside the International Airport in Ikeja Lagos or at our Lekki VI office. However, as we offer strictly chauffeur services, we can pick you up at any location of your convenience.
+        </motion.p>
+      )
     },
     {
       key: '2',
-      question: 'How do we find the chauffeur at the airport?',
-      answer: 'Our professional chauffeur will be waiting for you at the arrival area holding a sign with your name on it. We also provide you with the chauffeur\'s contact information prior to your arrival.'
+      label: 'How do we find the chauffeur at the airport?',
+      children: (
+        <motion.p 
+          className="text-gray-600 py-2"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          Our professional chauffeur will be waiting for you at the arrival area holding a sign with your name on it. We also provide you with the chauffeur's contact information prior to your arrival.
+        </motion.p>
+      )
     },
     {
       key: '3',
-      question: 'Will my chauffeur assist with my bags and dress professionally?',
-      answer: 'Yes, all our chauffeurs are trained to assist with your luggage and are required to wear professional attire at all times. Customer service is our top priority.'
+      label: 'Will my chauffeur assist with my bags and dress professionally?',
+      children: (
+        <motion.p 
+          className="text-gray-600 py-2"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          Yes, all our chauffeurs are trained to assist with your luggage and are required to wear professional attire at all times. Customer service is our top priority.
+        </motion.p>
+      )
     },
     {
       key: '4',
-      question: 'What types of cars do you offer?',
-      answer: 'We offer a wide range of luxury vehicles including Mercedes-Benz, BMW, Rolls-Royce, and more. Our fleet consists of sedans, SUVs, and premium vans to suit all your needs.'
+      label: 'What types of cars do you offer?',
+      children: (
+        <motion.p 
+          className="text-gray-600 py-2"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          We offer a wide range of luxury vehicles including Mercedes-Benz, BMW, Rolls-Royce, and more. Our fleet consists of sedans, SUVs, and premium vans to suit all your needs.
+        </motion.p>
+      )
     },
     {
       key: '5',
-      question: 'How can I pay for my booking?',
-      answer: 'We accept major credit/debit cards, bank transfers, and mobile payments. You can pay online during booking or arrange for payment upon arrival.'
+      label: 'How can I pay for my booking?',
+      children: (
+        <motion.p 
+          className="text-gray-600 py-2"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          We accept major credit/debit cards, bank transfers, and mobile payments. You can pay online during booking or arrange for payment upon arrival.
+        </motion.p>
+      )
     },
     {
       key: '6',
-      question: 'What is your cancellation policy?',
-      answer: 'We offer free cancellation up to 24 hours before your scheduled pickup. Cancellations made within 24 hours may be subject to a fee. Please contact our customer service for specific details.'
+      label: 'What is your cancellation policy?',
+      children: (
+        <motion.p 
+          className="text-gray-600 py-2"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          We offer free cancellation up to 24 hours before your scheduled pickup. Cancellations made within 24 hours may be subject to a fee. Please contact our customer service for specific details.
+        </motion.p>
+      )
     },
     {
       key: '7',
-      question: 'Do you offer long-term rentals?',
-      answer: 'Yes, we offer special rates for long-term chauffeur services and extended rentals. Please contact us directly for a customized quote based on your specific needs.'
+      label: 'Do you offer long-term rentals?',
+      children: (
+        <motion.p 
+          className="text-gray-600 py-2"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          Yes, we offer special rates for long-term chauffeur services and extended rentals. Please contact us directly for a customized quote based on your specific needs.
+        </motion.p>
+      )
     }
   ];
 
@@ -96,28 +157,16 @@ export default function Frequently() {
                 <UpOutlined className="text-green-500 text-lg" /> : 
                 <DownOutlined className="text-gray-400 text-lg" />
             )}
-          >
-            {displayFaqs.map(item => (
-              <Panel 
-                header={
-                  <div className="flex items-center py-2">
-                    <span className="text-lg font-medium">{item.question}</span>
-                  </div>
-                } 
-                key={item.key} 
-                className={`mb-4 rounded-lg overflow-hidden ${getPanelStyle(item.key)}`}
-              >
-                <motion.p 
-                  className="text-gray-600 py-2"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {item.answer}
-                </motion.p>
-              </Panel>
-            ))}
-          </Collapse>
+            items={displayFaqs.map(item => ({
+              ...item,
+              className: `mb-4 rounded-lg overflow-hidden ${getPanelStyle(item.key)}`,
+              label: (
+                <div className="flex items-center py-2">
+                  <span className="text-lg font-medium">{item.label}</span>
+                </div>
+              )
+            }))}
+          />
         </div>
 
         <div className="flex justify-center mt-8">

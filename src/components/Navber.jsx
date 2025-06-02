@@ -1,12 +1,15 @@
+"use client";
 import React, { useState } from 'react';
 import { Button, Menu, Drawer } from 'antd';
 import { MenuOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const Navbar = () => {
   const [current, setCurrent] = useState('home');
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const router = useRouter();
 
   const handleClick = (e) => {
     setCurrent(e.key);
@@ -25,29 +28,31 @@ const Navbar = () => {
 
   // Menu items data
   const menuItems = [
-    { key: 'home', label: 'HOME', path: "/" },
-    { key: 'fleet', label: 'FLEET', path: "/fleet" },
-    { key: 'reservation', label: 'RESERVATION', path: "/reservation" },
-    { key: 'booking', label: 'MY BOOKING', path: "/booking" },
-    { key: 'about', label: 'ABOUT US', path: "/about" },
+    { key: 'home', label: <Link href="/">HOME</Link> },
+    { key: 'fleet', label: <Link href="/fleet">FLEET</Link> },
+    { key: 'reservation', label: <Link href="/reservation">RESERVATION</Link> },
+    { key: 'booking', label: <Link href="/booking">MY BOOKING</Link> },
+    { key: 'about', label: <Link href="/about">ABOUT US</Link> },
   ];
 
-  // Mobile menu component
-  const MobileMenuItem = ({ item }) => (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <Menu.Item 
-        key={item.key} 
-        className="text-base"
-        onClick={() => handleClick({ key: item.key })}
+  // Mobile menu items
+  const mobileMenuItems = menuItems.map(item => ({
+    key: item.key,
+    label: (
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.3 }}
       >
-        <Link href={item.path}>{item.label}</Link>
-      </Menu.Item>
-    </motion.div>
-  );
+        <Link href={item.key === 'home' ? '/' : `/${item.key}`}>
+          {item.key === 'home' ? 'HOME' : 
+           item.key === 'fleet' ? 'FLEET' : 
+           item.key === 'reservation' ? 'RESERVATION' : 
+           item.key === 'booking' ? 'MY BOOKING' : 'ABOUT US'}
+        </Link>
+      </motion.div>
+    ),
+  }));
 
   return (
     <div className="bg-white shadow-sm sticky top-0 z-50">
@@ -62,28 +67,23 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop Navigation Menu */}
-        <div className='hidden sm:flex items-center w-5/12'>  {/* Added w-full */}
-            <Menu 
-              mode="horizontal" 
-              style={{ 
-                fontWeight: "600", 
-                fontSize: "15px",
-                width: "100%",  // Ensure menu takes full width
-                display: "flex",
-                justifyContent: "space-around" // or "space-between"
-              }}
-              selectedKeys={[current]} 
-              onClick={handleClick}
-              className="border-none"
-              overflowedIndicator={null}  // This hides the ellipsis
-            >
-              {menuItems.map(item => (
-                <Menu.Item key={item.key}>
-                  <Link href={item.path}>{item.label}</Link>
-                </Menu.Item>
-              ))}
-            </Menu>
-      </div>
+        <div className='hidden sm:flex items-center w-5/12'>
+          <Menu 
+            mode="horizontal" 
+            style={{ 
+              fontWeight: "600", 
+              fontSize: "15px",
+              width: "100%",
+              display: "flex",
+              justifyContent: "space-around"
+            }}
+            selectedKeys={[current]} 
+            onClick={handleClick}
+            className="border-none"
+            overflowedIndicator={null}
+            items={menuItems}
+          />
+        </div>
 
         {/* Desktop Contact Button */}
         <div className="hidden lg:flex items-center">
@@ -91,10 +91,11 @@ const Navbar = () => {
             type="primary" 
             size="large"
             className="font-semibold text-sm md:text-base ml-4"
-            style={{ minWidth: 140 }}
+            style={{ minWidth: 140 , backgroundColor: '#04BF61' }}
             onClick={() => {
               setCurrent('contact');
               handleClick({ key: 'contact' });
+              router.push('/contact');
             }}
           >
             CONTACT US
@@ -136,11 +137,8 @@ const Navbar = () => {
                 selectedKeys={[current]} 
                 mode="vertical"
                 className="border-none"
-              >
-                {menuItems.map(item => (
-                  <MobileMenuItem key={item.key} item={item} />
-                ))}
-              </Menu>
+                items={mobileMenuItems}
+              />
             </div>
 
             <motion.div
@@ -158,6 +156,7 @@ const Navbar = () => {
                   setCurrent('contact');
                   handleClick({ key: 'contact' });
                   onClose();
+                  router.push('/contact');
                 }}
               >
                 CONTACT US
