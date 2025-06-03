@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Button, Rate, Card, Avatar, Row, Col, Typography, Space } from 'antd';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
+import { useGetReviewsQuery } from '../../features/Home_page/HomeApi';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -11,37 +12,29 @@ export default function CustomerTestimonials() {
   const [slideDirection, setSlideDirection] = useState('');
   const [prevIndex, setPrevIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  const [page, setPage] = useState(1);
 
-  const testimonials = [
-    {
-      name: "Wade Warren",
-      rating: 5,
-      text: "The service was exceptional! The car was spotless, and the chauffeur was professional and friendly. Highly recommend!",
-      title: "Satisfied Client",
-      avatarColor: '#1890ff'
-    },
-    {
-      name: "Devon Lane",
-      rating: 5,
-      text: "I rented a car for my wedding, and it was a perfect experience. The driver was on time, and the car was beautiful!",
-      title: "Satisfied Client",
-      avatarColor: '#52c41a'
-    },
-    {
-      name: "Jane Smith",
-      rating: 4,
-      text: "Great service overall. The car was clean and comfortable. Would definitely use again for my business trips.",
-      title: "Frequent Traveler",
-      avatarColor: '#faad14'
-    },
-    {
-      name: "Robert Johnson",
-      rating: 5,
-      text: "Outstanding customer service. They went above and beyond to accommodate my last-minute booking request.",
-      title: "First-time Customer",
-      avatarColor: '#f5222d'
+  const { data: reviewData, isLoading } = useGetReviewsQuery(page);
+  const [testimonials, setTestimonials] = useState([]);
+
+  useEffect(() => {
+    if (reviewData?.data?.reviews) {
+      const formattedReviews = reviewData.data.reviews.map(review => ({
+        name: review.clientEmail.split('@')[0],
+        rating: review.rating,
+        text: review.comment,
+        title: "Satisfied Client",
+        avatarColor: getRandomColor(),
+        createdAt: review.createdAt
+      }));
+      setTestimonials(formattedReviews);
     }
-  ];
+  }, [reviewData]);
+
+  const getRandomColor = () => {
+    const colors = ['#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#13c2c2'];
+    return colors[Math.floor(Math.random() * colors.length)];
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -53,8 +46,20 @@ export default function CustomerTestimonials() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const canGoNext = () => {
+    if (isMobile) {
+      return testimonials.length > 1 && currentIndex < testimonials.length - 1;
+    } else {
+      return testimonials.length > 2 && currentIndex < testimonials.length - 2;
+    }
+  };
+
+  const canGoPrev = () => {
+    return currentIndex > 0;
+  };
+
   const handlePrev = () => {
-    if (isAnimating) return;
+    if (isAnimating || !canGoPrev()) return;
     setPrevIndex(currentIndex);
     setSlideDirection('right');
     setIsAnimating(true);
@@ -66,7 +71,7 @@ export default function CustomerTestimonials() {
   };
 
   const handleNext = () => {
-    if (isAnimating) return;
+    if (isAnimating || !canGoNext()) return;
     setPrevIndex(currentIndex);
     setSlideDirection('left');
     setIsAnimating(true);
@@ -87,33 +92,36 @@ export default function CustomerTestimonials() {
   }, [isAnimating]);
 
   const getVisibleTestimonials = () => {
+    if (testimonials.length === 0) return [];
     if (isMobile) {
-      return [testimonials[currentIndex]];
+      return [testimonials[currentIndex % testimonials.length]];
     } else {
       return [
-        testimonials[currentIndex],
+        testimonials[currentIndex % testimonials.length],
         testimonials[(currentIndex + 1) % testimonials.length]
-      ];
+      ].filter(Boolean);
     }
   };
 
   const getPrevVisibleTestimonials = () => {
+    if (testimonials.length === 0) return [];
     if (isMobile) {
-      return [testimonials[prevIndex]];
+      return [testimonials[prevIndex % testimonials.length]];
     } else {
       return [
-        testimonials[prevIndex],
+        testimonials[prevIndex % testimonials.length],
         testimonials[(prevIndex + 1) % testimonials.length]
-      ];
+      ].filter(Boolean);
     }
   };
 
   const paginationDots = testimonials.map((_, index) => {
     let isActive;
     if (isMobile) {
-      isActive = index === currentIndex;
+      isActive = index === currentIndex % testimonials.length;
     } else {
-      isActive = index === currentIndex || index === (currentIndex + 1) % testimonials.length;
+      isActive = index === currentIndex % testimonials.length || 
+                index === (currentIndex + 1) % testimonials.length;
     }
     
     return (
@@ -130,6 +138,10 @@ export default function CustomerTestimonials() {
       />
     );
   });
+
+  if (isLoading && testimonials.length === 0) {
+    return <div>Loading reviews...</div>;
+  }
 
   return (
     <div className='container mx-auto pb-16 sm:px-0 px-2.5'>
@@ -153,32 +165,36 @@ export default function CustomerTestimonials() {
                 icon={<LeftOutlined />} 
                 onClick={handlePrev}
                 style={{ 
-                  borderColor: '#52c41a', 
-                  color: '#52c41a',
+                  borderColor: canGoPrev() ? '#52c41a' : '#d9d9d9', 
+                  color: canGoPrev() ? '#52c41a' : '#d9d9d9',
                   transition: 'all 0.3s ease',
-                  boxShadow: isAnimating ? 'none' : '0 2px 8px rgba(82, 196, 26, 0.15)',
-                  transform: isAnimating ? 'scale(0.95)' : 'scale(1)'
+                  boxShadow: isAnimating ? 'none' : canGoPrev() ? '0 2px 8px rgba(82, 196, 26, 0.15)' : 'none',
+                  transform: isAnimating ? 'scale(0.95)' : 'scale(1)',
+                  cursor: canGoPrev() ? 'pointer' : 'not-allowed'
                 }}
-                disabled={isAnimating}
+                disabled={isAnimating || !canGoPrev()}
               />
               <Button 
                 shape="circle" 
                 icon={<RightOutlined />} 
                 onClick={handleNext}
                 style={{ 
-                  borderColor: '#52c41a', 
-                  color: '#52c41a',
+                  borderColor: canGoNext() ? '#52c41a' : '#d9d9d9', 
+                  color: canGoNext() ? '#52c41a' : '#d9d9d9',
                   transition: 'all 0.3s ease',
-                  boxShadow: isAnimating ? 'none' : '0 2px 8px rgba(82, 196, 26, 0.15)',
-                  transform: isAnimating ? 'scale(0.95)' : 'scale(1)'
+                  boxShadow: isAnimating ? 'none' : canGoNext() ? '0 2px 8px rgba(82, 196, 26, 0.15)' : 'none',
+                  transform: isAnimating ? 'scale(0.95)' : 'scale(1)',
+                  cursor: canGoNext() ? 'pointer' : 'not-allowed'
                 }}
-                disabled={isAnimating}
+                disabled={isAnimating || !canGoNext()}
               />
             </Space>
             
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
-              {paginationDots}
-            </div>
+            {testimonials.length > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
+                {paginationDots}
+              </div>
+            )}
           </Space>
         </Col>
 
@@ -239,6 +255,9 @@ export default function CustomerTestimonials() {
                       <Paragraph style={{ marginTop: 16 }}>
                         {testimonial.text}
                       </Paragraph>
+                      <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 8 }}>
+                        {new Date(testimonial.createdAt).toLocaleDateString()}
+                      </Text>
                     </Card>
                   </Col>
                 ))}
@@ -295,10 +314,19 @@ export default function CustomerTestimonials() {
                     <Paragraph style={{ marginTop: 16 }}>
                       {testimonial.text}
                     </Paragraph>
+                    <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 8 }}>
+                      {new Date(testimonial.createdAt).toLocaleDateString()}
+                    </Text>
                   </Card>
                 </Col>
               ))}
             </Row>
+
+            {testimonials.length === 0 && !isLoading && (
+              <div style={{ textAlign: 'center', padding: 40 }}>
+                <Text type="secondary">No reviews available yet</Text>
+              </div>
+            )}
           </div>
         </Col>
       </Row>

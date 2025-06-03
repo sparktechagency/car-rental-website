@@ -1,12 +1,7 @@
-import '@ant-design/v5-patch-for-react-19'
-import "./globals.css";
-import { ToastContainer } from 'react-toastify';
-import Navbar from "@/components/Navber";
-import 'react-toastify/dist/ReactToastify.css';
-import { ConfigProvider } from "antd";
-import Header from "@/components/Header";
-import { AntdRegistry } from "@ant-design/nextjs-registry";
-import AppFooter from "../components/AppFooter";
+// app/layout.js
+import { AntdRegistry } from '@ant-design/nextjs-registry';
+import ClientLayout from './ClientLayout';
+import './globals.css';
 
 export const metadata = {
   title: "Car Rental - Find the Perfect Vehicle for Your Journey",
@@ -39,46 +34,9 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body
-        className={`antialiased`}
-        cz-shortcut-listen="true"
-      >
-         <AntdRegistry>
-        <ConfigProvider
-          theme={{
-            token: {
-              colorPrimary: '#04BF61',
-              colorBorder: '#E5E4E2',
-              colorText: 'rgba(0, 0, 0, 0.88)',
-              colorTextPlaceholder: '#bfbfbf',
-              colorBgContainer: '#ffffff',
-              controlOutline: 'rgba(232, 80, 91, 0.1)',
-            },
-            components: {
-              Button: {
-                controlHeight: 50,
-              },
-              Input: {
-                controlHeight: 48,
-              },
-              Select: {
-                controlHeight: 48,
-              },
-              DatePicker: {
-                controlHeight: 48,
-              },
-            },
-            Button: {
-              colorPrimary: '#0001FB',
-            }
-          }}
-        >
-          <Header />
-          <Navbar />
-          {children}
-          <AppFooter />
-          <ToastContainer position="top-center" autoClose={2000} />
-        </ConfigProvider>
+      <body className={`antialiased`} cz-shortcut-listen="true">
+        <AntdRegistry>
+          <ClientLayout>{children}</ClientLayout>
         </AntdRegistry>
       </body>
     </html>

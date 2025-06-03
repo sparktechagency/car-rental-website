@@ -164,7 +164,6 @@ export default function Fleet() {
         onCancel={handleCancel}
         footer={null}
         width={500}
-        bodyStyle={{ padding: 0 }}
         centered
       >
         <div className="bg-white rounded-lg shadow-xl px-4 sm:px-6 py-6 sm:py-8 w-full">

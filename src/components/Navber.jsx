@@ -1,19 +1,37 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Menu, Drawer } from 'antd';
 import { MenuOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 const Navbar = () => {
   const [current, setCurrent] = useState('home');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Function to get current page key from pathname
+  const getCurrentPageKey = (path) => {
+    if (path === '/') return 'home';
+    if (path === '/fleet') return 'fleet';
+    if (path === '/reservation') return 'reservation';
+    if (path === '/booking') return 'booking';
+    if (path === '/about') return 'about';
+    if (path === '/contact') return 'contact';
+    return 'home'; // default fallback
+  };
+
+  // Set current page based on pathname on mount and pathname changes
+  useEffect(() => {
+    const currentPageKey = getCurrentPageKey(pathname);
+    setCurrent(currentPageKey);
+  }, [pathname]);
 
   const handleClick = (e) => {
     setCurrent(e.key);
-    if (window.innerWidth < 992) { // 992px is lg breakpoint
+    if (window.innerWidth < 992) { //992px is lg breakpoint
       setDrawerOpen(false);
     }
   };

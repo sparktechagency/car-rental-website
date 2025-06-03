@@ -197,7 +197,7 @@ export default function CarRental() {
                                     <Card
                                         hoverable
                                         cover={<img alt={car.name} src={car.image} className="w-full object-cover" />}
-                                        bodyStyle={{ padding: '12px' }}
+                                        style={{ padding: '12px' }}
                                         className="h-full"
                                     >
                                         <div className="flex justify-between items-center mb-1">
