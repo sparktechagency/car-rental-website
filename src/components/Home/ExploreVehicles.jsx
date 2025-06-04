@@ -1,6 +1,6 @@
 "use client";
 import { ArrowRightOutlined, CarOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
-import { Button, Rate, Tabs } from 'antd';
+import { Button, Rate, Spin, Tabs } from 'antd';
 import { useState } from 'react';
 import { useGetAllVehiclesPopularQuery, useGetAllVehiclesRecentsQuery } from '../../features/Home_page/HomeApi';
 
@@ -8,6 +8,7 @@ export default function ExploreVehicles() {
   const [activeTab, setActiveTab] = useState('1');
   const { data: recentVehicles, isLoading: isRecentVehiclesLoading } = useGetAllVehiclesRecentsQuery();
   const { data: popularVehicles, isLoading: isPopularVehiclesLoading } = useGetAllVehiclesPopularQuery();
+  console.log(recentVehicles?.data.result);
 
   // Function to transform API data to car card format
   const transformVehicleData = (vehicle) => ({
@@ -27,7 +28,7 @@ export default function ExploreVehicles() {
   // Helper function to get vehicle image based on name
   const getVehicleImage = (name) => {
     const lowerName = name.toLowerCase();
-    if (lowerName.includes('maserati')) return '/images/maserati.png';
+    if (lowerName.includes('Explorer XLT')) return '/images/maserati.png';
     if (lowerName.includes('hyundai')) return '/images/Hyundai.png';
     if (lowerName.includes('mercedes')) return '/images/Mercedes.png';
     if (lowerName.includes('toyota')) return '/images/Toyota.png';
@@ -42,9 +43,9 @@ export default function ExploreVehicles() {
       children: (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
           {isRecentVehiclesLoading ? (
-            <p>Loading recent vehicles...</p>
-          ) : recentVehicles?.length > 0 ? (
-            recentVehicles.map((vehicle) => (
+            <div className='col-span-full flex items-center justify-center w-full h-64 '><Spin size='default' /></div>
+          ) : recentVehicles?.data?.result?.length > 0 ? (
+            recentVehicles?.data?.result.map((vehicle) => (
               <CarCard key={vehicle._id} car={transformVehicleData(vehicle)} />
             ))
           ) : (
@@ -60,9 +61,9 @@ export default function ExploreVehicles() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
           {/* Featured cars could be a combination or different API call */}
           {isRecentVehiclesLoading ? (
-            <p>Loading featured vehicles...</p>
+            <div className='col-span-full flex items-center justify-center w-full h-64 '><Spin size='default' /></div>
           ) : recentVehicles?.length > 0 ? (
-            recentVehicles.slice(0, 4).map((vehicle) => (
+            recentVehicles?.data?.result.slice(0, 4).map((vehicle) => (
               <CarCard key={vehicle._id} car={transformVehicleData(vehicle)} />
             ))
           ) : (
@@ -77,9 +78,9 @@ export default function ExploreVehicles() {
       children: (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
           {isPopularVehiclesLoading ? (
-            <p>Loading popular vehicles...</p>
-          ) : popularVehicles?.length > 0 ? (
-            popularVehicles.map((vehicle) => (
+            <div className='col-span-full flex items-center justify-center w-full h-64 '><Spin size='default' /></div>
+          ) : popularVehicles?.data?.result?.length > 0 ? (
+            popularVehicles?.data?.result.map((vehicle) => (
               <CarCard key={vehicle._id} car={transformVehicleData(vehicle)} />
             ))
           ) : (
@@ -112,7 +113,7 @@ export default function ExploreVehicles() {
 
 function CarCard({ car }) {
   return (
-    <div className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
+    <div className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300">
       <div className="aspect-w-16 aspect-h-9 sm:aspect-w-3 sm:aspect-h-2">
         <img
           src={car.image}
@@ -160,7 +161,7 @@ function CarCard({ car }) {
           </div>
         </div>
 
-        <Button className="w-full" type="primary">
+        <Button className="w-full Vehicles">
           BOOK NOW
         </Button>
       </div>

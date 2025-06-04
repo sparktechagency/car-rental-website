@@ -6,7 +6,6 @@ import { useGetFAQQuery } from '../features/Home_page/HomeApi';
 
 const Header = () => {
   const { data: faq, isLoading, isError } = useGetFAQQuery();
-  console.log(faq?.data?.contact?.email)
   return (
     <div className="bg-[#1A373A] text-white py-1.5 md:py-2 px-3 md:px-4">
       <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
@@ -17,7 +16,7 @@ const Header = () => {
             className="flex items-center justify-center gap-1.5 md:gap-2 text-white hover:text-amber-400 text-[11px] xs:text-xs sm:text-sm md:text-base"
           >
             <CallIcons className="w-3 h-3 min-w-[12px] md:w-5 md:h-5" />
-            <span className="truncate">{isLoading ? 'Loading...' : faq?.data?.contact?.whatsapp}</span>
+            <span className="truncate">{isLoading ? 'Loading...' : faq?.data?.contact?.phone}</span>
           </Link>
 
           <Link

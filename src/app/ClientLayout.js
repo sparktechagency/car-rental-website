@@ -1,14 +1,14 @@
 // app/ClientLayout.jsx
 'use client';
-
-import { ToastContainer } from 'react-toastify';
-import Navbar from "@/components/Navber";
-import 'react-toastify/dist/ReactToastify.css';
-import { ConfigProvider } from "antd";
 import Header from "@/components/Header";
-import AppFooter from "../components/AppFooter";
+import Navbar from "@/components/Navber";
+import '@ant-design/v5-patch-for-react-19';
+import { ConfigProvider } from "antd";
 import { Provider } from 'react-redux';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { store } from '../../utils/store';
+import AppFooter from "../components/AppFooter";
 
 
 export default function ClientLayout({ children }) {

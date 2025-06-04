@@ -37,7 +37,7 @@ export const HomeApi = baseApi.injectEndpoints({
       providesTags: ["home"],
     }),
 
-     getFAQ: builder.query({
+    getFAQ: builder.query({
       query: () => ({
         url: `/company-cms`,
         method: "GET",
