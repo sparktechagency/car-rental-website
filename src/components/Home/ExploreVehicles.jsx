@@ -8,7 +8,6 @@ export default function ExploreVehicles() {
   const [activeTab, setActiveTab] = useState('1');
   const { data: recentVehicles, isLoading: isRecentVehiclesLoading } = useGetAllVehiclesRecentsQuery();
   const { data: popularVehicles, isLoading: isPopularVehiclesLoading } = useGetAllVehiclesPopularQuery();
-  console.log(recentVehicles?.data.result);
 
   // Function to transform API data to car card format
   const transformVehicleData = (vehicle) => ({

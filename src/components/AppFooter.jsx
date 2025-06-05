@@ -11,7 +11,7 @@ const { Title, Text } = Typography;
 const AppFooter = () => {
   return (
     <Footer style={{backgroundColor:"#101A12" , color:"#ffffff"}} className="p-0 bg-[#101A12] text-white">
-      <div className="max-w-7xl mx-auto py-16 px-4">
+      <div className="max-w-7xl mx-auto py-16 px-4 ">
         <Row gutter={[48, 24]} className="mb-12">
           <Col xs={24} sm={24} md={8} lg={8}>
             <div className="flex flex-col">

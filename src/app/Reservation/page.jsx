@@ -4,7 +4,6 @@ import {
   ArrowRightOutlined,
   CarOutlined,
   DatabaseOutlined,
-  EnvironmentOutlined,
   UserOutlined
 } from '@ant-design/icons';
 import {
@@ -12,15 +11,13 @@ import {
   Card,
   Checkbox,
   Collapse,
-  DatePicker,
   Empty,
   Radio,
   Rate,
   Slider,
-  Spin,
-  TimePicker
+  Spin
 } from 'antd';
-import dayjs from 'dayjs';
+import { Calendar, MapPin } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { baseURL } from '../../../utils/BaseURL';
@@ -38,6 +35,8 @@ export default function CarRental() {
     luggage: 0,
     brands: []
   });
+
+  const reservation = JSON.parse(localStorage.getItem("reservation"));
 
   const [currentPage, setCurrentPage] = useState(1);
   const { data, isLoading, error, refetch } = useGetAllVehiclesQuery({
@@ -143,8 +142,47 @@ export default function CarRental() {
 
 
   const handleValue = (value) => {
-    localStorage.setItem("vehicle", JSON.stringify(value));
+    // console.log(value._id);
+    // localStorage.setItem("vehicle", JSON.stringify(value));
+    const storedData = localStorage.getItem('reservation');
+    let dataArray = storedData ? JSON.parse(storedData) : [];
+
+    // 2. Check if it's an array and not empty
+    if (Array.isArray(dataArray) && dataArray.length > 0) {
+      // 3. Add the new key-value pair to each object
+      dataArray = dataArray.map(obj => {
+        return {
+          ...obj, // spread existing properties
+          ...value
+        };
+      });
+
+      // 4. Save the updated array back to localStorage
+      localStorage.setItem('reservation', JSON.stringify(dataArray));
+    }
+
   }
+
+
+  const formatDate = (dateTimeString) => {
+    const date = new Date(dateTimeString);
+    const day = date.getDate();
+    const month = date.getMonth() + 1; // Months are 0-based
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  const formatTime = (dateTimeString) => {
+    const date = new Date(dateTimeString);
+    let hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? 'pm' : 'am';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // the hour '0' should be '12'
+
+    return `${hours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+  };
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -160,55 +198,47 @@ export default function CarRental() {
 
       <div className="flex flex-col md:flex-row gap-8">
         {/* Left sidebar */}
-        <div className="md:w-1/4">
-          <div className="mb-8 border border-gray-200 rounded-md p-5">
-            <h3 className="font-bold mb-4 border-b border-gray-200 pb-5">Location</h3>
+        <div className="md:w-1/4 flex flex-col gap-2">
 
-            <div className="mb-4">
-              <p className="font-semibold mb-2">Pick-up</p>
-              <div className="flex items-start mb-2">
-                <EnvironmentOutlined className="mt-1 mr-2 text-gray-500" />
-                <div>
-                  <p className="text-sm">Murtala Mohammed International Airport Lagos</p>
+          <div className=" bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+            {/* Location Header */}
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Location</h2>
+
+              {/* Pick-up Section */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Pick-up</h3>
+
+                <div className="flex items-start gap-3 mb-3">
+                  <MapPin className="w-5 h-5 text-gray-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-gray-700 font-medium">{reservation[0].pickupLocation}</p>
+                    <p className="text-gray-700">Airport Lagos</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                  <p className="text-gray-700">{formatDate(reservation[0].pickupDate)}, {formatTime(reservation[0].pickupTime)}</p>
                 </div>
               </div>
-              <div className="flex items-center ml-6 gap-3">
-                <DatePicker
-                  size="small"
-                  defaultValue={dayjs('2025-03-25')}
-                  format="DD/MM/YYYY"
-                  className="mr-2 w-32"
-                />
-                <TimePicker
-                  size="small"
-                  defaultValue={dayjs('12:00', 'HH:mm')}
-                  format="HH:mm"
-                  className="w-24"
-                />
-              </div>
-            </div>
 
-            <div>
-              <p className="font-semibold mb-2">Return</p>
-              <div className="flex items-start mb-2">
-                <EnvironmentOutlined className="mt-1 mr-2 text-gray-500" />
-                <div>
-                  <p className="text-sm">Murtala Mohammed International Airport Lagos</p>
+              {/* Return Section */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Return</h3>
+
+                <div className="flex items-start gap-3 mb-3">
+                  <MapPin className="w-5 h-5 text-gray-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-gray-700 font-medium">{reservation[0].returnLocation}</p>
+                    <p className="text-gray-700">Airport Lagos</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center ml-6 gap-3">
-                <DatePicker
-                  size="small"
-                  defaultValue={dayjs('2025-03-26')}
-                  format="DD/MM/YYYY"
-                  className="mr-2 w-32"
-                />
-                <TimePicker
-                  size="small"
-                  defaultValue={dayjs('16:00', 'HH:mm')}
-                  format="HH:mm"
-                  className="w-24"
-                />
+
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                  <p className="text-gray-700">{formatDate(reservation[0].returnDate)}, {formatTime(reservation[0].returnTime)}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -430,7 +460,7 @@ export default function CarRental() {
                       <Button
                         onClick={() => {
                           handleValue(vehicle);
-                          router.push(`/booking-extras?vehicleId=${vehicle._id}`);
+                          router.push(`/booking-extras`);
                         }}
                         className="Vehicles"
                         block

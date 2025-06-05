@@ -1,6 +1,6 @@
 "use client";
 import { CalendarOutlined, ClockCircleOutlined, PlusOutlined } from '@ant-design/icons';
-import { Button, Checkbox, DatePicker, Input, Select, TimePicker } from 'antd';
+import { Button, Checkbox, DatePicker, Input, Select, Spin, TimePicker } from 'antd';
 import { useState } from 'react';
 
 const Hero = () => {
@@ -11,6 +11,25 @@ const Hero = () => {
   const [customReturnLocation, setCustomReturnLocation] = useState('');
   const [showCustomPickupInput, setShowCustomPickupInput] = useState(false);
   const [showCustomReturnInput, setShowCustomReturnInput] = useState(false);
+  const [pickupDate, setPickupDate] = useState(null);
+  const [returnDate, setReturnDate] = useState(null);
+  const [pickupTime, setPickupTime] = useState(null);
+  const [returnTime, setReturnTime] = useState(null);
+  const [isloading , setIsloading] = useState(false);
+
+  const handleValues = () => {
+    const values = {
+      pickupDate: pickupDate ? pickupDate.format('2028-12-01T10:00:00Z') : null,
+      returnDate: returnDate ? returnDate.format('2028-12-01T06:00:00Z') : null,
+      pickupTime: pickupTime ? pickupTime.format('2028-12-10T10:00:00Z') : null,
+      returnTime: returnTime ? returnTime.format('2028-12-10T09:59:00Z') : null,
+      pickupLocation,
+      returnLocation,
+      sameLocation
+    };
+    console.log(values);  // all values
+    return values;
+  };
 
   const handleLocationChange = (checked) => {
     setSameLocation(checked);
@@ -57,6 +76,19 @@ const Hero = () => {
     setCustomReturnLocation('');
   };
 
+  const handleSubmit = () => {
+    const values = handleValues();
+    // Here you can use the values for your reservation logic
+    // For example: send to an API, etc.
+    setIsloading(true);
+    setTimeout(() => {
+      localStorage.setItem("reservation", JSON.stringify([values]));
+      setIsloading(false);
+      window.location.href = "/reservation";
+    }, 2000);
+    
+  };
+
   const locationOptions = [
     { value: 'Muritala Mohammed International', label: 'Muritala Mohammed International' },
     { value: 'Lagos Airport', label: 'Lagos Airport' },
@@ -92,8 +124,10 @@ const Hero = () => {
         </div>
 
         {/* Right side - Reservation form */}
-        <div className="w-full lg:w-1/2 flex items-center justify-center lg:justify-end">
+      
+          <div className="w-full lg:w-1/2 flex items-center justify-center lg:justify-end">
           <div className="bg-white rounded-lg shadow-xl px-4 sm:px-6 py-6 sm:py-8 w-full max-w-md">
+            <Spin size='small' spinning={isloading} tip="finding your car...">
             <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-6 text-gray-800">RESERVATION</h2>
 
             <div className="grid grid-cols-2 gap-3 sm:gap-4">
@@ -108,6 +142,8 @@ const Hero = () => {
                   style={{ borderColor: '#10B981' }}
                   renderExtraFooter={() => null}
                   allowClear={false}
+                  onChange={setPickupDate}
+                  value={pickupDate}
                 />
               </div>
 
@@ -120,6 +156,8 @@ const Hero = () => {
                   suffixIcon={<ClockCircleOutlined className="text-green-500" />}
                   style={{ borderColor: '#10B981' }}
                   allowClear={false}
+                  onChange={setPickupTime}
+                  value={pickupTime}
                 />
               </div>
 
@@ -133,6 +171,8 @@ const Hero = () => {
                   style={{ borderColor: '#10B981' }}
                   renderExtraFooter={() => null}
                   allowClear={false}
+                  onChange={setReturnDate}
+                  value={returnDate}
                 />
               </div>
 
@@ -145,6 +185,8 @@ const Hero = () => {
                   suffixIcon={<ClockCircleOutlined className="text-green-500" />}
                   style={{ borderColor: '#10B981' }}
                   allowClear={false}
+                  onChange={setReturnTime}
+                  value={returnTime}
                 />
               </div>
             </div>
@@ -227,11 +269,12 @@ const Hero = () => {
               <Button
                 type="primary"
                 className="w-full h-12 sm:h-14 text-white font-medium text-base sm:text-lg"
-                // style={{ backgroundColor: '#10B981', borderColor: '#10B981' }}
+                onClick={handleSubmit}
               >
                 MAKE RESERVATION
               </Button>
             </div>
+        </Spin>
           </div>
         </div>
       </div>

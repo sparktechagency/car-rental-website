@@ -2,12 +2,7 @@
 "use client";
 import {
   CarOutlined,
-  ClockCircleOutlined,
-  DollarOutlined,
   EnvironmentOutlined,
-  HomeOutlined,
-  RocketOutlined,
-  SafetyOutlined,
   SettingOutlined,
   UserOutlined
 } from '@ant-design/icons';
@@ -15,15 +10,20 @@ import {
   Button,
   Card
 } from 'antd';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { baseURL } from '../../../utils/BaseURL';
 import { useGetAllExtraServiceQuery } from '../../features/reservation_page/reservationApi';
 
-const ChildSeatCard = ({ title, description, price }) => {
+const ChildSeatCard = ({ title, description, price, onAddToggle }) => {
   const [add, setAdd] = useState(false);
 
-
-
+  const handleClick = () => {
+    const newAddState = !add;
+    setAdd(newAddState);
+    onAddToggle(newAddState);
+  };
 
   return (
     <Card className="h-full">
@@ -53,14 +53,12 @@ const ChildSeatCard = ({ title, description, price }) => {
               <p className="text-green-500 font-bold text-base">₦ {price}</p>
             </div>
             <Button
-              onClick={() => setAdd(prev => !prev)}
+              onClick={handleClick}
               type="primary"
               className="bg-yellow-400 hover:bg-yellow-500 border-yellow-400 hover:border-yellow-500 text-gray-900 font-medium"
               size="small"
             >
-              {
-                add ? "ADD" : "ADDED"
-              }
+              {add ? "ADDED" : "ADD"}
             </Button>
           </div>
           <Button type="link" className="text-xs p-0 mt-2 text-gray-500">More info</Button>
@@ -70,15 +68,21 @@ const ChildSeatCard = ({ title, description, price }) => {
   );
 };
 
-const AddonCard = ({ icon, title, description, price, isFree }) => {
-  const router = useRouter();
-  const [add, setAdd] = useState(false)
+const AddonCard = ({ icon, title, description, price, isFree, onAddToggle }) => {
+  const [add, setAdd] = useState(false);
+
+  const handleClick = () => {
+    const newAddState = !add;
+    setAdd(newAddState);
+    onAddToggle(newAddState);
+  };
+
   return (
     <div className='border border-gray-300 p-3 rounded-md shadow h-full'>
       <div className="flex flex-col h-full">
         <div className="flex items-start space-x-3 mb-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-md bg-gray-100 p-2">
-            {icon}
+            <Image src={`${baseURL}/${icon}`} height={40} width={40} alt={title} />
           </div>
           <div className="flex-1">
             <h2 className="text-base font-bold text-gray-900">{title}</h2>
@@ -97,14 +101,12 @@ const AddonCard = ({ icon, title, description, price, isFree }) => {
               <p className="text-green-500 font-bold text-base">₦ {price}</p>
             </div>
             <Button
-              onClick={() => setAdd(prev => !prev)}
+              onClick={handleClick}
               className="Vehicles"
               size='middle'
               style={{ width: "100px", height: "35px" }}
             >
-              {
-                add ? "ADDED" : "ADD"
-              }
+              {add ? "ADDED" : "ADD"}
             </Button>
           </div>
         </div>
@@ -115,85 +117,17 @@ const AddonCard = ({ icon, title, description, price, isFree }) => {
 
 export default function BookingExtras() {
   const router = useRouter();
+  const vehicleData = localStorage.getItem("reservation");
+  const vehicle = JSON.parse(vehicleData);
+  const [addedServicesCount, setAddedServicesCount] = useState(0);
 
   const { data } = useGetAllExtraServiceQuery();
   console.log(data?.data.result);
-  // Define addons data
-  const addons = [
-    {
-      id: 2,
-      icon: <DollarOutlined className="text-gray-700" />,
-      title: 'Full Day Fueling - VAT FREE',
-      price: '70,000',
-      description: 'Avoid fueling up during your trip. Let our chauffeur handle it daily, so you can save time. Prepay for fuel service and never worry about your wallet.',
-      isFree: false
-    },
-    {
-      id: 3,
-      icon: <EnvironmentOutlined className="text-gray-700" />,
-      title: 'Travel Fee - Lagos Outskirt',
-      price: '50,000',
-      description: 'We operate mainly in Lagos, Nigeria. For trips outside Lagos, a travel fee applies. If returning on the same day, select and pay for the return fee.',
-      isFree: false
-    },
-    {
-      id: 4,
-      icon: <RocketOutlined className="text-gray-700" />,
-      title: 'Regular Travel Fee',
-      price: '120,000',
-      description: 'Our operation is based in Lagos, Nigeria. If youre traveling outside Lagos, a travel fee applies. Please select and pay for the fee based on your destination.',
-      isFree: false
-    },
-    {
-      id: 5,
-      icon: <SafetyOutlined className="text-gray-700" />,
-      title: 'Armed Security Protection Services',
-      price: '60,000',
-      description: 'Armed security is available on request. If you only need security for specific days, select the single-day option and indicate how many days youll need it.',
-      isFree: false
-    },
-    {
-      id: 6,
-      icon: <CarOutlined className="text-gray-700" />,
-      title: 'Drop Off Fueling - VAT FREE',
-      price: '35,000',
-      description: 'Fueling is required for drop-off. Prepay to save time and avoid hassle. Ensure the vehicle is ready for the next trip without delays.',
-      isFree: true
-    },
-    {
-      id: 7,
-      icon: <DollarOutlined className="text-gray-700" />,
-      title: 'Travel Fueling - VAT FREE',
-      price: '139,999',
-      description: 'Fueling is mandatory for drop-off. Prepay to avoid the hassle and ensure the vehicle is ready. This service maximizes efficiency and ensures a smooth transition.',
-      isFree: true
-    },
-    {
-      id: 8,
-      icon: <HomeOutlined className="text-gray-700" />,
-      title: 'Airport Fees - VAT FREE',
-      price: '10,000',
-      description: 'Covers miscellaneous airport-related charges like access, toll, escort fees, and other incidental expenses. These fees ensure smooth and efficient service at the airport.',
-      isFree: false
-    },
-    {
-      id: 9,
-      icon: <ClockCircleOutlined className="text-gray-700" />,
-      title: 'Overnight Lodging For Chauffeurs',
-      price: '50,000',
-      description: 'This fee covers accommodation for chauffeurs on long trips or ensuring they have a safe place to rest. It ensures theyre well-rested for their next assignment.',
-      isFree: false
-    },
-    {
-      id: 10,
-      icon: <ClockCircleOutlined className="text-gray-700" />,
-      title: 'Late Fee Charge - VAT FREE',
-      price: '20,000',
-      description: 'Applicable for trips concluding between 8 PM and 10 PM, when public transportation options are limited. This fee helps accommodate the lack of transportation during these hours.',
-      isFree: true
-    }
-  ];
 
+  const handleExtraService = (isAdded) => {
+    setAddedServicesCount(prevCount => isAdded ? prevCount + 1 : prevCount - 1);
+    localStorage.setItem("pronab", isAdded);
+  };
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
       <div className="mb-6">
@@ -244,28 +178,28 @@ export default function BookingExtras() {
                 className="w-full h-48 object-cover"
               />
               <div className="p-4">
-                <h4 className="font-bold text-lg mb-1">MERCEDES-BENZ</h4>
+                <h4 className="font-bold text-lg mb-1">{vehicle[0]?.brand}</h4>
                 <p className="text-xs text-gray-500 mb-1">Starts From</p>
-                <p className="text-green-500 font-bold mb-4 border-b border-gray-200 pb-2">₦ 109,999/Day</p>
+                <p className="text-green-500 font-bold mb-4 border-b border-gray-200 pb-2">₦ {vehicle[0]?.dailyRate}/Day</p>
 
                 <div className="flex justify-between mb-3">
                   <div className="flex items-center">
                     <UserOutlined className="mr-1 text-gray-500" />
-                    <span className="text-xs">6 Seats</span>
+                    <span className="text-xs">{vehicle[0].noOfSeats} Seats</span>
                   </div>
                   <div className="flex items-center">
-                    <span className="text-xs">5</span>
+                    <span className="text-xs">{vehicle[0].noOfLuggages}</span>
                   </div>
                 </div>
 
                 <div className="flex justify-between">
                   <div className="flex items-center">
                     <CarOutlined className="mr-1 text-gray-500" />
-                    <span className="text-xs">2 Doors</span>
+                    <span className="text-xs">{vehicle[0].noOfDoors} Doors</span>
                   </div>
                   <div className="flex items-center">
                     <SettingOutlined className="mr-1 text-gray-500" />
-                    <span className="text-xs">Automatic</span>
+                    <span className="text-xs">{vehicle[0].transmissionType}</span>
                   </div>
                 </div>
               </div>
@@ -276,30 +210,40 @@ export default function BookingExtras() {
         {/* Main content - Extras */}
         <div className="lg:w-3/4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {addons.map((addon) => (
+            {data?.data.result.map((addon) => (
               addon.id === 1 ? (
                 <ChildSeatCard
-                  key={addon.id}
-                  title={addon.title}
+                  key={addon._id}
+                  title={addon.name}
                   description={addon.description}
-                  price={addon.price}
+                  price={addon.cost}
+                  onAddToggle={handleExtraService}
                 />
               ) : (
                 <AddonCard
-                  key={addon.id}
-                  icon={addon.icon}
-                  title={addon.title}
+                  key={addon._id}
+                  icon={addon.image}
+                  title={addon.name}
                   description={addon.description}
-                  price={addon.price}
+                  price={addon.cost}
                   isFree={addon.isFree}
+                  onAddToggle={handleExtraService}
                 />
               )
             ))}
           </div>
 
           <div className="flex justify-end mt-6">
-            <Button onClick={() => router.push('/checkout')} type="primary" className="bg-green-500 border-green-500 hover:bg-green-600" size="large">
-              Continue Booking
+            <Button
+              onClick={() => {
+                handleExtraService(addedServicesCount);
+                router.push('/checkout');
+              }}
+              type="primary"
+              className="bg-green-500 border-green-500 hover:bg-green-600"
+              size="large"
+            >
+              Continue Booking (Added: {addedServicesCount})
             </Button>
           </div>
         </div>
