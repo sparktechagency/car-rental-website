@@ -1,40 +1,80 @@
 "use client";
 import { CalendarOutlined, ClockCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Checkbox, DatePicker, Input, Select, Spin, TimePicker } from 'antd';
-import { useState } from 'react';
+import dayjs from 'dayjs';
+import { useEffect, useState } from 'react';
 
 const Hero = () => {
   const [sameLocation, setSameLocation] = useState(true);
-  const [pickupLocation, setPickupLocation] = useState('Muritala Mohammed International');
-  const [returnLocation, setReturnLocation] = useState('Muritala Mohammed International');
+  const [pickupLocation, setPickupLocation] = useState('');
+  const [returnLocation, setReturnLocation] = useState('');
   const [customPickupLocation, setCustomPickupLocation] = useState('');
   const [customReturnLocation, setCustomReturnLocation] = useState('');
   const [showCustomPickupInput, setShowCustomPickupInput] = useState(false);
   const [showCustomReturnInput, setShowCustomReturnInput] = useState(false);
-  const [pickupDate, setPickupDate] = useState(null);
-  const [returnDate, setReturnDate] = useState(null);
-  const [pickupTime, setPickupTime] = useState(null);
-  const [returnTime, setReturnTime] = useState(null);
-  const [isloading , setIsloading] = useState(false);
+  const [pickupDate, setPickupDate] = useState(dayjs());
+  const [returnDate, setReturnDate] = useState(dayjs());
+  const [pickupTime, setPickupTime] = useState(dayjs().set('hour', 0).set('minute', 0));
+  const [returnTime, setReturnTime] = useState(dayjs().set('hour', 12).set('minute', 0));
+  const [isloading, setIsloading] = useState(false);
+  const [errors, setErrors] = useState({
+    pickupDate: '',
+    pickupTime: '',
+    returnDate: '',
+    returnTime: '',
+    pickupLocation: '',
+    returnLocation: ''
+  });
+
+  useEffect(() => {
+    // Validate return date/time when pickup date/time changes
+    if (pickupDate && returnDate && pickupTime && returnTime) {
+      validateDateTime();
+    }
+  }, [pickupDate, returnDate, pickupTime, returnTime]);
+
+  const validateDateTime = () => {
+    const newErrors = { ...errors };
+    let hasError = false;
+
+    // Combine date and time for comparison
+    const pickupDateTime = dayjs(pickupDate)
+      .set('hour', pickupTime.hour())
+      .set('minute', pickupTime.minute());
+    const returnDateTime = dayjs(returnDate)
+      .set('hour', returnTime.hour())
+      .set('minute', returnTime.minute());
+
+    // Check if return is at least 3 hours after pickup
+    const minReturnDateTime = pickupDateTime.add(3, 'hour');
+    if (returnDateTime.isBefore(minReturnDateTime)) {
+      newErrors.returnDate = 'Return must be at least 3 hours after pickup';
+      hasError = true;
+    } else {
+      newErrors.returnDate = '';
+    }
+
+    setErrors(newErrors);
+    return !hasError;
+  };
 
   const handleValues = () => {
-    const values = {
-      pickupDate: pickupDate ? pickupDate.format('2028-12-01T10:00:00Z') : null,
-      returnDate: returnDate ? returnDate.format('2028-12-01T06:00:00Z') : null,
-      pickupTime: pickupTime ? pickupTime.format('2028-12-10T10:00:00Z') : null,
-      returnTime: returnTime ? returnTime.format('2028-12-10T09:59:00Z') : null,
+    return {
+      pickupDate: pickupDate ? pickupDate.format('YYYY-MM-DD') : null,
+      returnDate: returnDate ? returnDate.format('YYYY-MM-DD') : null,
+      pickupTime: pickupTime ? pickupTime.format('HH:mm') : null,
+      returnTime: returnTime ? returnTime.format('HH:mm') : null,
       pickupLocation,
       returnLocation,
       sameLocation
     };
-    console.log(values);  // all values
-    return values;
   };
 
   const handleLocationChange = (checked) => {
     setSameLocation(checked);
     if (checked) {
       setReturnLocation(pickupLocation);
+      setErrors({ ...errors, returnLocation: '' });
     }
   };
 
@@ -44,8 +84,10 @@ const Hero = () => {
       return;
     }
     setPickupLocation(value);
+    setErrors({ ...errors, pickupLocation: '' });
     if (sameLocation) {
       setReturnLocation(value);
+      setErrors({ ...errors, returnLocation: '' });
     }
   };
 
@@ -55,38 +97,97 @@ const Hero = () => {
       return;
     }
     setReturnLocation(value);
+    setErrors({ ...errors, returnLocation: '' });
   };
 
   const handleCustomPickupSubmit = () => {
-    if (customPickupLocation.trim()) {
-      setPickupLocation(customPickupLocation);
-      if (sameLocation) {
-        setReturnLocation(customPickupLocation);
-      }
+    if (!customPickupLocation.trim()) {
+      setErrors({ ...errors, pickupLocation: 'Please enter a pickup location' });
+      return;
+    }
+    setPickupLocation(customPickupLocation);
+    setErrors({ ...errors, pickupLocation: '' });
+    if (sameLocation) {
+      setReturnLocation(customPickupLocation);
+      setErrors({ ...errors, returnLocation: '' });
     }
     setShowCustomPickupInput(false);
     setCustomPickupLocation('');
   };
 
   const handleCustomReturnSubmit = () => {
-    if (customReturnLocation.trim()) {
-      setReturnLocation(customReturnLocation);
+    if (!customReturnLocation.trim()) {
+      setErrors({ ...errors, returnLocation: 'Please enter a return location' });
+      return;
     }
+    setReturnLocation(customReturnLocation);
+    setErrors({ ...errors, returnLocation: '' });
     setShowCustomReturnInput(false);
     setCustomReturnLocation('');
   };
 
+  const validateForm = () => {
+    let valid = true;
+    const newErrors = {
+      pickupDate: '',
+      pickupTime: '',
+      returnDate: '',
+      returnTime: '',
+      pickupLocation: '',
+      returnLocation: ''
+    };
+
+    if (!pickupDate) {
+      newErrors.pickupDate = 'Please select a pickup date';
+      valid = false;
+    }
+    if (!pickupTime) {
+      newErrors.pickupTime = 'Please select a pickup time';
+      valid = false;
+    }
+    if (!returnDate) {
+      newErrors.returnDate = 'Please select a return date';
+      valid = false;
+    }
+    if (!returnTime) {
+      newErrors.returnTime = 'Please select a return time';
+      valid = false;
+    }
+    if (!pickupLocation) {
+      newErrors.pickupLocation = 'Please select a pickup location';
+      valid = false;
+    }
+    if (!returnLocation) {
+      newErrors.returnLocation = 'Please select a return location';
+      valid = false;
+    }
+
+    // Additional validation for date/time constraints
+    if (pickupDate && returnDate && pickupTime && returnTime) {
+      if (!validateDateTime()) {
+        valid = false;
+      }
+    }
+
+    setErrors(newErrors);
+    return valid;
+  };
+
   const handleSubmit = () => {
+    if (!validateForm()) return;
+
     const values = handleValues();
-    // Here you can use the values for your reservation logic
-    // For example: send to an API, etc.
     setIsloading(true);
     setTimeout(() => {
       localStorage.setItem("reservation", JSON.stringify([values]));
       setIsloading(false);
       window.location.href = "/reservation";
     }, 2000);
-    
+  };
+
+  const disabledDate = (current) => {
+    // Can not select days before today
+    return current && current < dayjs().startOf('day');
   };
 
   const locationOptions = [
@@ -124,157 +225,191 @@ const Hero = () => {
         </div>
 
         {/* Right side - Reservation form */}
-      
-          <div className="w-full lg:w-1/2 flex items-center justify-center lg:justify-end">
+        <div className="w-full lg:w-1/2 flex items-center justify-center lg:justify-end">
           <div className="bg-white rounded-lg shadow-xl px-4 sm:px-6 py-6 sm:py-8 w-full max-w-md">
             <Spin size='small' spinning={isloading} tip="finding your car...">
-            <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-6 text-gray-800">RESERVATION</h2>
+              <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-6 text-gray-800">RESERVATION</h2>
 
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
-              {/* Pick-up Date */}
-              <div className="col-span-1">
-                <DatePicker
-                  placeholder="Pick-up date"
-                  className="w-full"
-                  format="DD/MM/YYYY"
-                  suffixIcon={<CalendarOutlined className="text-green-500" />}
-                  popupClassName="ant-picker-dropdown"
-                  style={{ borderColor: '#10B981' }}
-                  renderExtraFooter={() => null}
-                  allowClear={false}
-                  onChange={setPickupDate}
-                  value={pickupDate}
-                />
-              </div>
-
-              {/* Pick-up Time */}
-              <div className="col-span-1">
-                <TimePicker
-                  placeholder="Pick-up time"
-                  className="w-full"
-                  format="HH:mm"
-                  suffixIcon={<ClockCircleOutlined className="text-green-500" />}
-                  style={{ borderColor: '#10B981' }}
-                  allowClear={false}
-                  onChange={setPickupTime}
-                  value={pickupTime}
-                />
-              </div>
-
-              {/* Return Date */}
-              <div className="col-span-1">
-                <DatePicker
-                  placeholder="Return date"
-                  className="w-full"
-                  format="DD/MM/YYYY"
-                  suffixIcon={<CalendarOutlined className="text-green-500" />}
-                  style={{ borderColor: '#10B981' }}
-                  renderExtraFooter={() => null}
-                  allowClear={false}
-                  onChange={setReturnDate}
-                  value={returnDate}
-                />
-              </div>
-
-              {/* Return Time */}
-              <div className="col-span-1">
-                <TimePicker
-                  placeholder="Return time"
-                  className="w-full"
-                  format="HH:mm"
-                  suffixIcon={<ClockCircleOutlined className="text-green-500" />}
-                  style={{ borderColor: '#10B981' }}
-                  allowClear={false}
-                  onChange={setReturnTime}
-                  value={returnTime}
-                />
-              </div>
-            </div>
-
-            {/* Pick-up Location */}
-            <div className="mt-3 sm:mt-4">
-              <p className="text-xs text-gray-500 mb-1">Pick-up Location</p>
-              {showCustomPickupInput ? (
-                <div className="flex">
-                  <Input
-                    placeholder="Enter custom location"
-                    value={customPickupLocation}
-                    onChange={(e) => setCustomPickupLocation(e.target.value)}
-                    style={{ borderColor: '#10B981' }}
-                    className="flex-1"
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                {/* Pick-up Date */}
+                <div className="col-span-1">
+                  <DatePicker
+                    placeholder="Pick-up date*"
+                    className="w-full"
+                    format="DD/MM/YYYY"
+                    suffixIcon={<CalendarOutlined className="text-green-500" />}
+                    popupClassName="ant-picker-dropdown"
+                    style={{ borderColor: errors.pickupDate ? '#ff4d4f' : '#10B981' }}
+                    renderExtraFooter={() => null}
+                    allowClear={false}
+                    onChange={(date) => {
+                      setPickupDate(date);
+                      setErrors({ ...errors, pickupDate: '' });
+                    }}
+                    value={pickupDate}
+                    disabledDate={disabledDate}
                   />
-                  <Button
-                    type="primary"
-                    onClick={handleCustomPickupSubmit}
-                    style={{ backgroundColor: '#10B981', borderColor: '#10B981', marginLeft: '8px' }}
-                  >
-                    Save
-                  </Button>
+                  {errors.pickupDate && <div className="text-red-500 text-xs mt-1">{errors.pickupDate}</div>}
                 </div>
-              ) : (
-                <Select
-                  className="w-full"
-                  value={pickupLocation}
-                  onChange={handlePickupLocationChange}
-                  options={locationOptions}
-                  style={{ borderColor: '#10B981' }}
-                />
-              )}
-            </div>
 
-            {/* Return Location */}
-            <div className="mt-3 sm:mt-4">
-              <p className="text-xs text-gray-500 mb-1">Return Location</p>
-              {showCustomReturnInput ? (
-                <div className="flex">
-                  <Input
-                    placeholder="Enter custom location"
-                    value={customReturnLocation}
-                    onChange={(e) => setCustomReturnLocation(e.target.value)}
-                    style={{ borderColor: '#10B981' }}
-                    className="flex-1"
+                {/* Pick-up Time */}
+                <div className="col-span-1">
+                  <TimePicker
+                    placeholder="Pick-up time*"
+                    className="w-full"
+                    format="HH:mm"
+                    suffixIcon={<ClockCircleOutlined className="text-green-500" />}
+                    style={{ borderColor: errors.pickupTime ? '#ff4d4f' : '#10B981' }}
+                    allowClear={false}
+                    onChange={(time) => {
+                      setPickupTime(time);
+                      setErrors({ ...errors, pickupTime: '' });
+                    }}
+                    value={pickupTime}
                   />
-                  <Button
-                    type="primary"
-                    onClick={handleCustomReturnSubmit}
-                    style={{ backgroundColor: '#10B981', borderColor: '#10B981', marginLeft: '8px' }}
-                  >
-                    Save
-                  </Button>
+                  {errors.pickupTime && <div className="text-red-500 text-xs mt-1">{errors.pickupTime}</div>}
                 </div>
-              ) : (
-                <Select
-                  className="w-full"
-                  value={returnLocation}
-                  onChange={handleReturnLocationChange}
-                  options={locationOptions}
-                  disabled={sameLocation}
-                  style={{ borderColor: '#10B981' }}
+
+                {/* Return Date */}
+                <div className="col-span-1">
+                  <DatePicker
+                    placeholder="Return date*"
+                    className="w-full"
+                    format="DD/MM/YYYY"
+                    suffixIcon={<CalendarOutlined className="text-green-500" />}
+                    style={{ borderColor: errors.returnDate ? '#ff4d4f' : '#10B981' }}
+                    renderExtraFooter={() => null}
+                    allowClear={false}
+                    onChange={(date) => {
+                      setReturnDate(date);
+                      setErrors({ ...errors, returnDate: '' });
+                    }}
+                    value={returnDate}
+                    disabledDate={(current) => {
+                      // Can't select dates before pickup date
+                      return pickupDate ? current && current < pickupDate.startOf('day') : false;
+                    }}
+                  />
+                  {errors.returnDate && <div className="text-red-500 text-xs mt-1">{errors.returnDate}</div>}
+                </div>
+
+                {/* Return Time */}
+                <div className="col-span-1">
+                  <TimePicker
+                    placeholder="Return time*"
+                    className="w-full"
+                    format="HH:mm"
+                    suffixIcon={<ClockCircleOutlined className="text-green-500" />}
+                    style={{ borderColor: errors.returnTime ? '#ff4d4f' : '#10B981' }}
+                    allowClear={false}
+                    onChange={(time) => {
+                      setReturnTime(time);
+                      setErrors({ ...errors, returnTime: '' });
+                    }}
+                    value={returnTime}
+                  />
+                  {errors.returnTime && <div className="text-red-500 text-xs mt-1">{errors.returnTime}</div>}
+                </div>
+              </div>
+
+              {/* Pick-up Location */}
+              <div className="mt-3 sm:mt-4">
+                <p className="text-xs text-gray-500 mb-1">Pick-up Location*</p>
+                {showCustomPickupInput ? (
+                  <div>
+                    <div className="flex">
+                      <Input
+                        placeholder="Enter custom location*"
+                        value={customPickupLocation}
+                        onChange={(e) => setCustomPickupLocation(e.target.value)}
+                        style={{ borderColor: errors.pickupLocation ? '#ff4d4f' : '#10B981' }}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="primary"
+                        onClick={handleCustomPickupSubmit}
+                        style={{ backgroundColor: '#10B981', borderColor: '#10B981', marginLeft: '8px' }}
+                      >
+                        Save
+                      </Button>
+                    </div>
+                    {errors.pickupLocation && <div className="text-red-500 text-xs mt-1">{errors.pickupLocation}</div>}
+                  </div>
+                ) : (
+                  <div>
+                    <Select
+                      className="w-full"
+                      value={pickupLocation || undefined}
+                      onChange={handlePickupLocationChange}
+                      options={locationOptions}
+                      style={{ borderColor: errors.pickupLocation ? '#ff4d4f' : '#10B981' }}
+                      placeholder="Select your pickup location"
+                    />
+                    {errors.pickupLocation && <div className="text-red-500 text-xs mt-1">{errors.pickupLocation}</div>}
+                  </div>
+                )}
+              </div>
+
+              {/* Return Location */}
+              <div className="mt-3 sm:mt-4">
+                <p className="text-xs text-gray-500 mb-1">Return Location*</p>
+                {showCustomReturnInput ? (
+                  <div>
+                    <div className="flex">
+                      <Input
+                        placeholder="Enter custom location*"
+                        value={customReturnLocation}
+                        onChange={(e) => setCustomReturnLocation(e.target.value)}
+                        style={{ borderColor: errors.returnLocation ? '#ff4d4f' : '#10B981' }}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="primary"
+                        onClick={handleCustomReturnSubmit}
+                        style={{ backgroundColor: '#10B981', borderColor: '#10B981', marginLeft: '8px' }}
+                      >
+                        Save
+                      </Button>
+                    </div>
+                    {errors.returnLocation && <div className="text-red-500 text-xs mt-1">{errors.returnLocation}</div>}
+                  </div>
+                ) : (
+                  <div>
+                    <Select
+                      className="w-full"
+                      value={returnLocation || undefined}
+                      onChange={handleReturnLocationChange}
+                      options={locationOptions}
+                      disabled={sameLocation}
+                      style={{ borderColor: errors.returnLocation ? '#ff4d4f' : '#10B981' }}
+                      placeholder="Select your return location"
+                    />
+                    {errors.returnLocation && <div className="text-red-500 text-xs mt-1">{errors.returnLocation}</div>}
+                  </div>
+                )}
+              </div>
+
+              {/* Same Location Checkbox */}
+              <div className="mt-3 sm:mt-4 flex items-center">
+                <Checkbox
+                  checked={sameLocation}
+                  onChange={(e) => handleLocationChange(e.target.checked)}
+                  className="text-primary"
                 />
-              )}
-            </div>
+                <span className="ml-2 text-sm text-gray-600">Same as pick-up location</span>
+              </div>
 
-            {/* Same Location Checkbox */}
-            <div className="mt-3 sm:mt-4 flex items-center">
-              <Checkbox
-                checked={sameLocation}
-                onChange={(e) => handleLocationChange(e.target.checked)}
-                className="text-primary"
-              />
-              <span className="ml-2 text-sm text-gray-600">Same as pick-up location</span>
-            </div>
-
-            {/* Submit Button */}
-            <div className="mt-4 sm:mt-6">
-              <Button
-                type="primary"
-                className="w-full h-12 sm:h-14 text-white font-medium text-base sm:text-lg"
-                onClick={handleSubmit}
-              >
-                MAKE RESERVATION
-              </Button>
-            </div>
-        </Spin>
+              {/* Submit Button */}
+              <div className="mt-4 sm:mt-6">
+                <Button
+                  type="primary"
+                  className="w-full h-12 sm:h-14 text-white font-medium text-base sm:text-lg"
+                  onClick={handleSubmit}
+                >
+                  MAKE RESERVATION
+                </Button>
+              </div>
+            </Spin>
           </div>
         </div>
       </div>

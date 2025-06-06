@@ -1,10 +1,10 @@
 "use client";
-import React, { useState, useEffect } from 'react';
-import { Button, Menu, Drawer } from 'antd';
 import { MenuOutlined } from '@ant-design/icons';
+import { Button, Drawer, Menu } from 'antd';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 const Navbar = () => {
   const [current, setCurrent] = useState('home');
@@ -16,10 +16,9 @@ const Navbar = () => {
   const getCurrentPageKey = (path) => {
     if (path === '/') return 'home';
     if (path === '/fleet') return 'fleet';
-    if (path === '/reservation') return 'reservation';
+    if (path === '/contact') return 'contact';
     if (path === '/booking') return 'booking';
     if (path === '/about') return 'about';
-    if (path === '/contact') return 'contact';
     return 'home'; // default fallback
   };
 
@@ -48,9 +47,9 @@ const Navbar = () => {
   const menuItems = [
     { key: 'home', label: <Link href="/">HOME</Link> },
     { key: 'fleet', label: <Link href="/fleet">FLEET</Link> },
-    { key: 'reservation', label: <Link href="/reservation">RESERVATION</Link> },
     { key: 'booking', label: <Link href="/booking">MY BOOKING</Link> },
     { key: 'about', label: <Link href="/about">ABOUT US</Link> },
+    { key: 'reservation', label: <Link href="/contact">CONTACT</Link> },
   ];
 
   // Mobile menu items
@@ -63,10 +62,10 @@ const Navbar = () => {
         transition={{ duration: 0.3 }}
       >
         <Link href={item.key === 'home' ? '/' : `/${item.key}`}>
-          {item.key === 'home' ? 'HOME' : 
-           item.key === 'fleet' ? 'FLEET' : 
-           item.key === 'reservation' ? 'RESERVATION' : 
-           item.key === 'booking' ? 'MY BOOKING' : 'ABOUT US'}
+          {item.key === 'home' ? 'HOME' :
+            item.key === 'fleet' ? 'FLEET' :
+              item.key === 'contact' ? 'CONTACT' :
+                item.key === 'booking' ? 'MY BOOKING' : 'ABOUT US'}
         </Link>
       </motion.div>
     ),
@@ -77,25 +76,25 @@ const Navbar = () => {
       <div className="container mx-auto px-4 flex items-center justify-between py-3 md:py-4">
         {/* Logo - responsive sizing */}
         <Link href={'/'} className="flex items-center cursor-pointer">
-          <img 
-            src="/images/logo.png" 
-            alt="Logo" 
-            className="h-7 sm:h-8 md:h-9 lg:h-10" 
+          <img
+            src="/images/logo.png"
+            alt="Logo"
+            className="h-7 sm:h-8 md:h-9 lg:h-10"
           />
         </Link>
 
         {/* Desktop Navigation Menu */}
         <div className='hidden sm:flex items-center w-5/12'>
-          <Menu 
-            mode="horizontal" 
-            style={{ 
-              fontWeight: "600", 
+          <Menu
+            mode="horizontal"
+            style={{
+              fontWeight: "600",
               fontSize: "15px",
               width: "100%",
               display: "flex",
               justifyContent: "space-around"
             }}
-            selectedKeys={[current]} 
+            selectedKeys={[current]}
             onClick={handleClick}
             className="border-none"
             overflowedIndicator={null}
@@ -105,11 +104,11 @@ const Navbar = () => {
 
         {/* Desktop Contact Button */}
         <div className="hidden lg:flex items-center">
-          <Button 
-            type="primary" 
+          <Button
+            type="primary"
             size="large"
             className="font-semibold text-sm md:text-base ml-4"
-            style={{ minWidth: 140 , backgroundColor: '#04BF61' }}
+            style={{ minWidth: 140, backgroundColor: '#04BF61' }}
             onClick={() => {
               setCurrent('contact');
               handleClick({ key: 'contact' });
@@ -122,9 +121,9 @@ const Navbar = () => {
 
         {/* Mobile menu button */}
         <div className="lg:hidden">
-          <Button 
-            type="text" 
-            icon={<MenuOutlined style={{ fontSize: '24px' }} />} 
+          <Button
+            type="text"
+            icon={<MenuOutlined style={{ fontSize: '24px' }} />}
             onClick={showDrawer}
             className="flex items-center justify-center w-10 h-10"
           />
@@ -150,9 +149,9 @@ const Navbar = () => {
         >
           <div className="flex flex-col h-full">
             <div className="flex-grow overflow-y-auto">
-              <Menu 
-                onClick={handleClick} 
-                selectedKeys={[current]} 
+              <Menu
+                onClick={handleClick}
+                selectedKeys={[current]}
                 mode="vertical"
                 className="border-none"
                 items={mobileMenuItems}
@@ -165,9 +164,9 @@ const Navbar = () => {
               transition={{ delay: 0.1 }}
               className="p-4 border-t border-gray-100"
             >
-              <Button 
-                type="primary" 
-                block 
+              <Button
+                type="primary"
+                block
                 size="large"
                 className="font-semibold text-base"
                 onClick={() => {

@@ -37,6 +37,7 @@ export default function CarRental() {
   });
 
   const reservation = JSON.parse(localStorage.getItem("reservation"));
+  console.log(reservation);
 
   const [currentPage, setCurrentPage] = useState(1);
   const { data, isLoading, error, refetch } = useGetAllVehiclesQuery({
@@ -145,6 +146,7 @@ export default function CarRental() {
     // console.log(value._id);
     // localStorage.setItem("vehicle", JSON.stringify(value));
     const storedData = localStorage.getItem('reservation');
+    console.log(storedData);
     let dataArray = storedData ? JSON.parse(storedData) : [];
 
     // 2. Check if it's an array and not empty
@@ -152,7 +154,7 @@ export default function CarRental() {
       // 3. Add the new key-value pair to each object
       dataArray = dataArray.map(obj => {
         return {
-          ...obj, // spread existing properties
+          ...obj,
           ...value
         };
       });
@@ -172,14 +174,24 @@ export default function CarRental() {
     return `${day}/${month}/${year}`;
   };
 
-  const formatTime = (dateTimeString) => {
-    const date = new Date(dateTimeString);
+  const formatTime = (timeString) => {
+    console.log(timeString);
+    let date = new Date(timeString);
+    if (isNaN(date.getTime())) {
+      const [hours, minutes] = timeString?.split(':').map(Number);
+      if (!isNaN(hours) && !isNaN(minutes)) {
+        date = new Date();
+        date.setHours(hours, minutes, 0, 0);
+      }
+    }
+    if (isNaN(date.getTime())) {
+      return timeString;
+    }
     let hours = date.getHours();
     const minutes = date.getMinutes();
     const ampm = hours >= 12 ? 'pm' : 'am';
     hours = hours % 12;
-    hours = hours ? hours : 12; // the hour '0' should be '12'
-
+    hours = hours ? hours : 12;
     return `${hours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
   };
 
@@ -219,7 +231,7 @@ export default function CarRental() {
 
                 <div className="flex items-center gap-3">
                   <Calendar className="w-5 h-5 text-gray-500 flex-shrink-0" />
-                  <p className="text-gray-700">{formatDate(reservation[0].pickupDate)}, {formatTime(reservation[0].pickupTime)}</p>
+                  <p className="text-gray-700">{formatDate(reservation[0]?.pickupDate)}, {formatTime(reservation[0]?.pickupTime)}</p>
                 </div>
               </div>
 
@@ -230,14 +242,14 @@ export default function CarRental() {
                 <div className="flex items-start gap-3 mb-3">
                   <MapPin className="w-5 h-5 text-gray-500 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-gray-700 font-medium">{reservation[0].returnLocation}</p>
+                    <p className="text-gray-700 font-medium">{reservation[0]?.returnLocation}</p>
                     <p className="text-gray-700">Airport Lagos</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <Calendar className="w-5 h-5 text-gray-500 flex-shrink-0" />
-                  <p className="text-gray-700">{formatDate(reservation[0].returnDate)}, {formatTime(reservation[0].returnTime)}</p>
+                  <p className="text-gray-700">{formatDate(reservation[0].returnDate)}, {formatTime(reservation[0]?.returnTime)}</p>
                 </div>
               </div>
             </div>

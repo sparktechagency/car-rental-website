@@ -1,6 +1,7 @@
 "use client";
 import { ArrowRightOutlined, CarOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
 import { Button, Rate, Spin, Tabs } from 'antd';
+import Link from 'next/link';
 import { useState } from 'react';
 import { useGetAllVehiclesPopularQuery, useGetAllVehiclesRecentsQuery } from '../../features/Home_page/HomeApi';
 
@@ -94,9 +95,9 @@ export default function ExploreVehicles() {
     <div className="container mx-auto sm:px-0 px-3 py-6 md:py-16">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Explore Vehicles</h1>
-        <a href="#" className="text-green-500 flex items-center hover:underline text-sm sm:text-base">
+        <Link href="/fleet" className="text-green-500 flex items-center hover:underline text-sm sm:text-base">
           View All <ArrowRightOutlined className="ml-1" />
-        </a>
+        </Link>
       </div>
 
       <Tabs

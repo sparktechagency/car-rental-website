@@ -42,7 +42,7 @@ export default function Contact() {
         <title>Contact Us | LuxAuto</title>
       </Head>
 
-      <CustomBanner title={"CONTACT us"} breadcrumbs={[{ label: "Home", href: "/" }, { label: "Contact Us", href: "/contact" }]} />
+      <CustomBanner title={"CONTACT US"} breadcrumbs={[{ label: "Home", href: "/" }, { label: "Contact Us", href: "/contact" }]} />
 
       <div className='container mx-auto px-4 py-8'>
         <Spin size="small" spinning={isContactDataLoading} tip="Loading contact information...">
