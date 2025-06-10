@@ -10,6 +10,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useState } from 'react';
 import { baseURL } from '../../../utils/BaseURL';
+import CustomLoading from '../../components/CustomLoading';
 import { useGetAllExtraServiceQuery } from '../../features/reservation_page/reservationApi';
 
 // Utility functions
@@ -305,7 +306,7 @@ export default function BookingExtras() {
   if (!isClient || loading) {
     return (
       <div className="container mx-auto px-4 py-8 flex justify-center items-center min-h-[50vh]">
-        <Spin size="large" />
+        <CustomLoading />
       </div>
     );
   }
@@ -460,7 +461,7 @@ export default function BookingExtras() {
         <div className="lg:w-3/4">
           {servicesLoading ? (
             <div className="flex justify-center items-center min-h-[300px]">
-              <Spin size="large" />
+              <div className='flex justify-center items-center h-[500px]'><Spin /></div>
             </div>
           ) : (
             <>

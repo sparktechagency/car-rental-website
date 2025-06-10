@@ -1,15 +1,8 @@
 // pages/about.js
 "use client"
-import { Button, Card, Col, Row, Typography } from 'antd';
-import {
-  EnvironmentOutlined,
-  CarOutlined,
-  ShopOutlined,
-  CustomerServiceOutlined,
-  PlayCircleOutlined
-} from '@ant-design/icons';
-import Head from 'next/head';
 import CustomBanner from '@/components/CustomBanner';
+import { Button, Card, Col, Row, Typography } from 'antd';
+import Head from 'next/head';
 import { CiLocationOn } from "react-icons/ci";
 
 const { Title, Paragraph } = Typography;
@@ -17,8 +10,8 @@ const { Title, Paragraph } = Typography;
 export default function About() {
   return (
     <div className="bg-gray-50">
-      <CustomBanner title={"About Us"} breadcrumbs={[  { label: "Home", href: "/" },
-          { label: "About us" , href:"/about" }]} />
+      <CustomBanner title={"About Us"} backgroundImage='/images/banner.jpg' breadcrumbs={[{ label: "Home", href: "/" },
+      { label: "About us", href: "/about" }]} />
       <Head>
         <title>About Us - The Lux Auto</title>
         <meta name="description" content="Learn more about The Lux Auto chauffeur services" />
@@ -135,35 +128,35 @@ export default function About() {
 
             </Col>
             <Col xs={24} sm={12} md={6}>
-            <Card className="text-center h-full border-0 shadow-md hover:shadow-lg transition-shadow">
+              <Card className="text-center h-full border-0 shadow-md hover:shadow-lg transition-shadow">
                 <div className='bg-green-500 w-20 h-20 flex items-center justify-center rounded-full mx-auto'>
                   <CiLocationOn className="text-4xl text-white" />
                 </div>
                 <Title level={5} className="font-bold mb-2 mt-4">airport delivery</Title>
                 <Paragraph className="text-gray-600">
-                Direct delivery to the airport.
+                  Direct delivery to the airport.
                 </Paragraph>
               </Card>
             </Col>
             <Col xs={24} sm={12} md={6}>
-            <Card className="text-center h-full border-0 shadow-md hover:shadow-lg transition-shadow">
+              <Card className="text-center h-full border-0 shadow-md hover:shadow-lg transition-shadow">
                 <div className='bg-green-500 w-20 h-20 flex items-center justify-center rounded-full mx-auto'>
-                <CiLocationOn className="text-4xl text-white" />
+                  <CiLocationOn className="text-4xl text-white" />
                 </div>
                 <Title level={5} className="font-bold mb-2 mt-4">curbside delivery</Title>
                 <Paragraph className="text-gray-600">
-                Quick drop-off at the curbside.
+                  Quick drop-off at the curbside.
                 </Paragraph>
               </Card>
             </Col>
             <Col xs={24} sm={12} md={6}>
-            <Card className="text-center h-full border-0 shadow-md hover:shadow-lg transition-shadow">
+              <Card className="text-center h-full border-0 shadow-md hover:shadow-lg transition-shadow">
                 <div className='bg-green-500 w-20 h-20 flex items-center justify-center rounded-full mx-auto'>
-                <CiLocationOn className="text-4xl text-white" />
+                  <CiLocationOn className="text-4xl text-white" />
                 </div>
                 <Title level={5} className="font-bold mb-2 mt-4">24/7 support</Title>
                 <Paragraph className="text-gray-600">
-                Assistance available anytime.
+                  Assistance available anytime.
                 </Paragraph>
               </Card>
             </Col>

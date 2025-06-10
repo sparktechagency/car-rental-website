@@ -14,13 +14,13 @@ import {
   Empty,
   Radio,
   Rate,
-  Slider,
-  Spin
+  Slider
 } from 'antd';
 import { Calendar, MapPin } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { baseURL } from '../../../utils/BaseURL';
+import CustomLoading from '../../components/CustomLoading';
 import { useGetAllVehiclesQuery, useSeatDoorLuggageBrandsQuery } from '../../features/reservation_page/reservationApi';
 
 const { Panel } = Collapse;
@@ -260,133 +260,164 @@ export default function CarRental() {
               <h3 className="font-bold mb-4">Filter</h3>
             </div>
 
-            <Collapse bordered={false} defaultActiveKey={['price', 'transmission', 'seats', 'doors', 'luggage', 'brands']}>
-              {/* Price Filter */}
-              <Panel header="Price Range" key="price" className="filter-panel">
-                <Slider
-                  range
-                  min={0}
-                  max={1000}
-                  value={filters.priceRange}
-                  onChange={handlePriceChange}
-                  trackStyle={[{ backgroundColor: '#10B981' }]}
-                  handleStyle={[
-                    { borderColor: '#10B981', backgroundColor: '#10B981' },
-                    { borderColor: '#10B981', backgroundColor: '#10B981' }
-                  ]}
-                />
-                <div className="flex justify-between mt-2">
-                  <span>${filters.priceRange[0]}</span>
-                  <span>${filters.priceRange[1]}</span>
-                </div>
-              </Panel>
-
-              {/* Transmission Filter */}
-              <Panel header="Transmission Type" key="transmission" className="filter-panel">
-                <Radio.Group
-                  onChange={handleTransmissionChange}
-                  value={filters.transmission}
-                >
-                  <Radio value="" className="block mb-2">
-                    <div className="flex items-center">
-                      All
-                    </div>
-                  </Radio>
-                  <Radio value="automatic" className="block mb-2">
-                    <div className="flex items-center">
-                      Automatic
-                    </div>
-                  </Radio>
-                  <Radio value="manual" className="block">
-                    <div className="flex items-center">
-                      Manual
-                    </div>
-                  </Radio>
-                </Radio.Group>
-              </Panel>
-
-              {/* Seats Filter */}
-              <Panel header="Seats Required" key="seats" className="filter-panel">
-                <div className="grid grid-cols-3 gap-3">
-                  <div
-                    className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.seats === 0 ? 'border border-green-500 text-green-500' : 'border border-gray-300'}`}
-                    onClick={() => handleSeatsChange(0)}
-                  >
-                    All
-                  </div>
-                  {seatOptions.map(num => (
-                    <div
-                      key={num}
-                      className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.seats === num ? 'border border-green-500 text-green-500' : 'border border-gray-300'}`}
-                      onClick={() => handleSeatsChange(num)}
-                    >
-                      {num}
-                    </div>
-                  ))}
-                </div>
-              </Panel>
-
-              {/* Doors Filter */}
-              <Panel header="Doors Required" key="doors" className="filter-panel">
-                <div className="grid grid-cols-3 gap-3">
-                  <div
-                    className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.doors === 0 ? 'border border-green-500 text-green-500' : 'border border-gray-300'}`}
-                    onClick={() => handleDoorsChange(0)}
-                  >
-                    All
-                  </div>
-                  {doorOptions.map(num => (
-                    <div
-                      key={num}
-                      className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.doors === num ? 'border border-green-500 text-green-500' : 'border border-gray-300'}`}
-                      onClick={() => handleDoorsChange(num)}
-                    >
-                      {num}
-                    </div>
-                  ))}
-                </div>
-              </Panel>
-
-              {/* Luggage Filter */}
-              <Panel header="Luggage Capacity" key="luggage" className="filter-panel">
-                <div className="grid grid-cols-3 gap-3">
-                  <div
-                    className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.luggage === 0 ? 'border border-green-500 text-green-500' : 'border border-gray-300'}`}
-                    onClick={() => handleLuggageChange(0)}
-                  >
-                    All
-                  </div>
-                  {luggageOptions.map(num => (
-                    <div
-                      key={num}
-                      className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.luggage === num ? 'border border-green-500 text-green-500' : 'border border-gray-300'}`}
-                      onClick={() => handleLuggageChange(num)}
-                    >
-                      {num}
-                    </div>
-                  ))}
-                </div>
-              </Panel>
-
-              {/* Brands Filter */}
-              <Panel header="Brands" key="brands" className="filter-panel">
-                <div className="space-y-2">
-                  {brandOptions.map(brand => (
-                    <div
-                      key={brand}
-                      className="flex items-center cursor-pointer gap-2"
-                      onClick={() => handleBrandChange(brand)}
-                    >
-                      <Checkbox
-                        checked={filters.brands.includes(brand)}
-                        className="mr-2"
+            <Collapse
+              bordered={false}
+              defaultActiveKey={['price', 'transmission', 'seats', 'doors', 'luggage', 'brands']}
+              items={[
+                // Price Filter
+                {
+                  key: 'price',
+                  label: 'Price Range',
+                  className: 'filter-panel',
+                  children: (
+                    <>
+                      <Slider
+                        range
+                        min={0}
+                        max={1000}
+                        value={filters.priceRange}
+                        onChange={handlePriceChange}
+                        trackStyle={[{ backgroundColor: '#10B981' }]}
+                        handleStyle={[
+                          { borderColor: '#10B981', backgroundColor: '#10B981' },
+                          { borderColor: '#10B981', backgroundColor: '#10B981' }
+                        ]}
                       />
-                      <span>{brand}</span>
+                      <div className="flex justify-between mt-2">
+                        <span>${filters.priceRange[0]}</span>
+                        <span>${filters.priceRange[1]}</span>
+                      </div>
+                    </>
+                  )
+                },
+                // Transmission Filter
+                {
+                  key: 'transmission',
+                  label: 'Transmission Type',
+                  className: 'filter-panel',
+                  children: (
+                    <Radio.Group
+                      onChange={handleTransmissionChange}
+                      value={filters.transmission}
+                    >
+                      <Radio value="" className="block mb-2">
+                        <div className="flex items-center">
+                          All
+                        </div>
+                      </Radio>
+                      <Radio value="automatic" className="block mb-2">
+                        <div className="flex items-center">
+                          Automatic
+                        </div>
+                      </Radio>
+                      <Radio value="manual" className="block">
+                        <div className="flex items-center">
+                          Manual
+                        </div>
+                      </Radio>
+                    </Radio.Group>
+                  )
+                },
+                // Seats Filter
+                {
+                  key: 'seats',
+                  label: 'Seats Required',
+                  className: 'filter-panel',
+                  children: (
+                    <div className="grid grid-cols-3 gap-3">
+                      <div
+                        className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.seats === 0 ? 'border border-green-500 text-green-500' : 'border border-gray-300'}`}
+                        onClick={() => handleSeatsChange(0)}
+                      >
+                        All
+                      </div>
+                      {seatOptions.map(num => (
+                        <div
+                          key={num}
+                          className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.seats === num ? 'border border-green-500 text-green-500' : 'border border-gray-300'}`}
+                          onClick={() => handleSeatsChange(num)}
+                        >
+                          {num}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </Panel>
-            </Collapse>
+                  )
+                },
+                // Doors Filter
+                {
+                  key: 'doors',
+                  label: 'Doors Required',
+                  className: 'filter-panel',
+                  children: (
+                    <div className="grid grid-cols-3 gap-3">
+                      <div
+                        className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.doors === 0 ? 'border border-green-500 text-green-500' : 'border border-gray-300'}`}
+                        onClick={() => handleDoorsChange(0)}
+                      >
+                        All
+                      </div>
+                      {doorOptions.map(num => (
+                        <div
+                          key={num}
+                          className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.doors === num ? 'border border-green-500 text-green-500' : 'border border-gray-300'}`}
+                          onClick={() => handleDoorsChange(num)}
+                        >
+                          {num}
+                        </div>
+                      ))}
+                    </div>
+                  )
+                },
+                // Luggage Filter
+                {
+                  key: 'luggage',
+                  label: 'Luggage Capacity',
+                  className: 'filter-panel',
+                  children: (
+                    <div className="grid grid-cols-3 gap-3">
+                      <div
+                        className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.luggage === 0 ? 'border border-green-500 text-green-500' : 'border border-gray-300'}`}
+                        onClick={() => handleLuggageChange(0)}
+                      >
+                        All
+                      </div>
+                      {luggageOptions.map(num => (
+                        <div
+                          key={num}
+                          className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.luggage === num ? 'border border-green-500 text-green-500' : 'border border-gray-300'}`}
+                          onClick={() => handleLuggageChange(num)}
+                        >
+                          {num}
+                        </div>
+                      ))}
+                    </div>
+                  )
+                },
+                // Brands Filter
+                {
+                  key: 'brands',
+                  label: 'Brands',
+                  className: 'filter-panel',
+                  children: (
+                    <div className="space-y-2">
+                      {brandOptions.map(brand => (
+                        <div
+                          key={brand}
+                          className="flex items-center cursor-pointer gap-2"
+                          onClick={() => handleBrandChange(brand)}
+                        >
+                          <Checkbox
+                            checked={filters.brands.includes(brand)}
+                            className="mr-2"
+                          />
+                          <span>{brand}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                }
+              ]}
+            />
           </div>
         </div>
 
@@ -394,7 +425,7 @@ export default function CarRental() {
         <div className="md:w-3/4">
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
-              <Spin size="large" />
+              <CustomLoading />
             </div>
           ) : error ? (
             <div className="flex justify-center items-center h-64">

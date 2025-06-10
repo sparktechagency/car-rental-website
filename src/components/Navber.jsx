@@ -16,7 +16,7 @@ const Navbar = () => {
   const getCurrentPageKey = (path) => {
     if (path === '/') return 'home';
     if (path === '/fleet') return 'fleet';
-    if (path === '/contact') return 'contact';
+    if (path === '/team') return 'team';
     if (path === '/booking') return 'booking';
     if (path === '/about') return 'about';
     return 'home'; // default fallback
@@ -49,7 +49,7 @@ const Navbar = () => {
     { key: 'fleet', label: <Link href="/fleet">FLEET</Link> },
     { key: 'booking', label: <Link href="/booking">MY BOOKING</Link> },
     { key: 'about', label: <Link href="/about">ABOUT US</Link> },
-    { key: 'reservation', label: <Link href="/contact">CONTACT</Link> },
+    { key: 'team', label: <Link href="/team">TEAM</Link> },
   ];
 
   // Mobile menu items
@@ -64,7 +64,7 @@ const Navbar = () => {
         <Link href={item.key === 'home' ? '/' : `/${item.key}`}>
           {item.key === 'home' ? 'HOME' :
             item.key === 'fleet' ? 'FLEET' :
-              item.key === 'contact' ? 'CONTACT' :
+              item.key === 'team' ? 'TEAM' :
                 item.key === 'booking' ? 'MY BOOKING' : 'ABOUT US'}
         </Link>
       </motion.div>

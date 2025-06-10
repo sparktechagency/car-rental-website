@@ -91,10 +91,10 @@ export default function Checkout() {
       const bookingPayload = {
         pickupDate: pickupDate.toISOString(),
         pickupTime: pickupDate.toISOString(),
-        pickupLocation: item.pickupLocation,
+        pickupLocation: item.pickupLocationId,
         returnDate: returnDate.toISOString(),
         returnTime: returnDate.toISOString(),
-        returnLocation: item.returnLocation,
+        returnLocation: item.returnLocationId,
         vehicle: item._id,
         extraServices: extraServices,
         clientDetails: {
@@ -113,8 +113,11 @@ export default function Checkout() {
 
       const response = await createBooking(bookingPayload).unwrap();
       console.log(response);
+
       messageApi.success('Booking created successfully!');
-      router.push('/BookingConfirmation?referenceId=' + item._id);
+      // router.push('/BookingConfirmation?referenceId=' + item._id);
+      localStorage.setItem("bookingId", item._id);
+      router.push(`${response?.data?.url}`);
 
     } catch (error) {
       console.error('Booking error:', error);

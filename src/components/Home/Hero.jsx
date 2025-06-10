@@ -2,20 +2,28 @@
 import { CalendarOutlined, ClockCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Checkbox, DatePicker, Input, Select, Spin, TimePicker } from 'antd';
 import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useGetLocationQuery } from '../../features/LocationApi';
 
 const Hero = () => {
   const [sameLocation, setSameLocation] = useState(true);
-  const [pickupLocation, setPickupLocation] = useState('');
-  const [returnLocation, setReturnLocation] = useState('');
+  const [pickupLocationId, setPickupLocationId] = useState('');
+  const [returnLocationId, setReturnLocationId] = useState('');
   const [customPickupLocation, setCustomPickupLocation] = useState('');
   const [customReturnLocation, setCustomReturnLocation] = useState('');
   const [showCustomPickupInput, setShowCustomPickupInput] = useState(false);
   const [showCustomReturnInput, setShowCustomReturnInput] = useState(false);
-  const [pickupDate, setPickupDate] = useState(dayjs());
-  const [returnDate, setReturnDate] = useState(dayjs());
-  const [pickupTime, setPickupTime] = useState(dayjs().set('hour', 0).set('minute', 0));
-  const [returnTime, setReturnTime] = useState(dayjs().set('hour', 12).set('minute', 0));
+
+  // Set default values - current time for pickup, +3 hours for return
+  const now = dayjs();
+  const defaultReturnTime = now.add(3, 'hour');
+
+  const { data: locations, isLoading: locationsLoading } = useGetLocationQuery();
+
+  const [pickupDate, setPickupDate] = useState(now);
+  const [returnDate, setReturnDate] = useState(defaultReturnTime);
+  const [pickupTime, setPickupTime] = useState(now);
+  const [returnTime, setReturnTime] = useState(defaultReturnTime);
   const [isloading, setIsloading] = useState(false);
   const [errors, setErrors] = useState({
     pickupDate: '',
@@ -26,54 +34,40 @@ const Hero = () => {
     returnLocation: ''
   });
 
-  useEffect(() => {
-    // Validate return date/time when pickup date/time changes
-    if (pickupDate && returnDate && pickupTime && returnTime) {
-      validateDateTime();
-    }
-  }, [pickupDate, returnDate, pickupTime, returnTime]);
-
-  const validateDateTime = () => {
-    const newErrors = { ...errors };
-    let hasError = false;
-
-    // Combine date and time for comparison
-    const pickupDateTime = dayjs(pickupDate)
-      .set('hour', pickupTime.hour())
-      .set('minute', pickupTime.minute());
-    const returnDateTime = dayjs(returnDate)
-      .set('hour', returnTime.hour())
-      .set('minute', returnTime.minute());
-
-    // Check if return is at least 3 hours after pickup
-    const minReturnDateTime = pickupDateTime.add(3, 'hour');
-    if (returnDateTime.isBefore(minReturnDateTime)) {
-      newErrors.returnDate = 'Return must be at least 3 hours after pickup';
-      hasError = true;
-    } else {
-      newErrors.returnDate = '';
-    }
-
-    setErrors(newErrors);
-    return !hasError;
-  };
-
   const handleValues = () => {
     return {
       pickupDate: pickupDate ? pickupDate.format('YYYY-MM-DD') : null,
       returnDate: returnDate ? returnDate.format('YYYY-MM-DD') : null,
       pickupTime: pickupTime ? pickupTime.format('HH:mm') : null,
       returnTime: returnTime ? returnTime.format('HH:mm') : null,
-      pickupLocation,
-      returnLocation,
+      pickupLocationId,
+      returnLocationId,
       sameLocation
     };
+  };
+
+  // Helper function to check if pickup datetime is in the past
+  const isPickupInPast = (date, time) => {
+    if (!date || !time) return false;
+    const pickupDateTime = dayjs(date).hour(time.hour()).minute(time.minute());
+    return pickupDateTime.isBefore(dayjs());
+  };
+
+  // Helper function to check if return is at least 3 hours after pickup
+  const isMinimumDuration = (pickupDate, pickupTime, returnDate, returnTime) => {
+    if (!pickupDate || !pickupTime || !returnDate || !returnTime) return true;
+
+    const pickup = dayjs(pickupDate).hour(pickupTime.hour()).minute(pickupTime.minute());
+    const returnDateTime = dayjs(returnDate).hour(returnTime.hour()).minute(returnTime.minute());
+
+    const diffInHours = returnDateTime.diff(pickup, 'hour', true);
+    return diffInHours >= 3;
   };
 
   const handleLocationChange = (checked) => {
     setSameLocation(checked);
     if (checked) {
-      setReturnLocation(pickupLocation);
+      setReturnLocationId(pickupLocationId);
       setErrors({ ...errors, returnLocation: '' });
     }
   };
@@ -83,10 +77,10 @@ const Hero = () => {
       setShowCustomPickupInput(true);
       return;
     }
-    setPickupLocation(value);
+    setPickupLocationId(value);
     setErrors({ ...errors, pickupLocation: '' });
     if (sameLocation) {
-      setReturnLocation(value);
+      setReturnLocationId(value);
       setErrors({ ...errors, returnLocation: '' });
     }
   };
@@ -96,7 +90,7 @@ const Hero = () => {
       setShowCustomReturnInput(true);
       return;
     }
-    setReturnLocation(value);
+    setReturnLocationId(value);
     setErrors({ ...errors, returnLocation: '' });
   };
 
@@ -105,10 +99,10 @@ const Hero = () => {
       setErrors({ ...errors, pickupLocation: 'Please enter a pickup location' });
       return;
     }
-    setPickupLocation(customPickupLocation);
+    setPickupLocationId(customPickupLocation);
     setErrors({ ...errors, pickupLocation: '' });
     if (sameLocation) {
-      setReturnLocation(customPickupLocation);
+      setReturnLocationId(customPickupLocation);
       setErrors({ ...errors, returnLocation: '' });
     }
     setShowCustomPickupInput(false);
@@ -120,10 +114,59 @@ const Hero = () => {
       setErrors({ ...errors, returnLocation: 'Please enter a return location' });
       return;
     }
-    setReturnLocation(customReturnLocation);
+    setReturnLocationId(customReturnLocation);
     setErrors({ ...errors, returnLocation: '' });
     setShowCustomReturnInput(false);
     setCustomReturnLocation('');
+  };
+
+  const handlePickupDateChange = (date) => {
+    setPickupDate(date);
+    setErrors({ ...errors, pickupDate: '' });
+
+    // Auto-set return date and time to 3 hours later
+    if (date && pickupTime) {
+      const pickupDateTime = dayjs(date).hour(pickupTime.hour()).minute(pickupTime.minute());
+      const returnDateTime = pickupDateTime.add(3, 'hour');
+
+      setReturnDate(returnDateTime);
+      setReturnTime(returnDateTime);
+    } else if (date && !returnDate) {
+      // If no return date is set, set it to the same day by default
+      setReturnDate(date);
+    }
+  };
+
+  const handlePickupTimeChange = (time) => {
+    setPickupTime(time);
+    setErrors({ ...errors, pickupTime: '' });
+
+    // Check if pickup time is in the past for today's date
+    if (pickupDate && pickupDate.isSame(dayjs(), 'day') && time) {
+      if (isPickupInPast(pickupDate, time)) {
+        setErrors({ ...errors, pickupTime: 'Pickup time cannot be in the past' });
+        return;
+      }
+    }
+
+    // Auto-set return date and time to 3 hours later
+    if (pickupDate && time) {
+      const pickupDateTime = dayjs(pickupDate).hour(time.hour()).minute(time.minute());
+      const returnDateTime = pickupDateTime.add(3, 'hour');
+
+      setReturnDate(returnDateTime);
+      setReturnTime(returnDateTime);
+    }
+  };
+
+  const handleReturnDateChange = (date) => {
+    setReturnDate(date);
+    setErrors({ ...errors, returnDate: '' });
+  };
+
+  const handleReturnTimeChange = (time) => {
+    setReturnTime(time);
+    setErrors({ ...errors, returnTime: '' });
   };
 
   const validateForm = () => {
@@ -153,20 +196,31 @@ const Hero = () => {
       newErrors.returnTime = 'Please select a return time';
       valid = false;
     }
-    if (!pickupLocation) {
+    if (!pickupLocationId) {
       newErrors.pickupLocation = 'Please select a pickup location';
       valid = false;
     }
-    if (!returnLocation) {
+    if (!returnLocationId) {
       newErrors.returnLocation = 'Please select a return location';
       valid = false;
     }
 
-    // Additional validation for date/time constraints
-    if (pickupDate && returnDate && pickupTime && returnTime) {
-      if (!validateDateTime()) {
+    // Additional validations
+    if (pickupDate && pickupTime && isPickupInPast(pickupDate, pickupTime)) {
+      newErrors.pickupTime = 'Pickup date and time cannot be in the past';
+      valid = false;
+    }
+
+    if (pickupDate && pickupTime && returnDate && returnTime) {
+      if (!isMinimumDuration(pickupDate, pickupTime, returnDate, returnTime)) {
+        newErrors.returnTime = 'Minimum reservation length is 3 hours';
         valid = false;
       }
+    }
+
+    if (pickupDate && returnDate && returnDate.isBefore(pickupDate)) {
+      newErrors.returnDate = 'Return date cannot be before pickup date';
+      valid = false;
     }
 
     setErrors(newErrors);
@@ -185,25 +239,122 @@ const Hero = () => {
     }, 2000);
   };
 
-  const disabledDate = (current) => {
-    // Can not select days before today
+  // Disable past dates for pickup
+  const disabledPickupDate = (current) => {
     return current && current < dayjs().startOf('day');
   };
 
-  const locationOptions = [
-    { value: 'Muritala Mohammed International', label: 'Muritala Mohammed International' },
-    { value: 'Lagos Airport', label: 'Lagos Airport' },
-    { value: 'Ikeja City Mall', label: 'Ikeja City Mall' },
-    {
-      value: 'custom',
-      label: (
-        <div className="flex items-center text-green-500">
-          <PlusOutlined className="mr-1" />
-          <span>Add custom location</span>
-        </div>
-      )
-    },
-  ];
+  // Disable past dates for return, and dates before pickup
+  const disabledReturnDate = (current) => {
+    const minDate = pickupDate || dayjs();
+    return current && current < minDate.startOf('day');
+  };
+
+  // Disable past times for pickup (only for today)
+  const disabledPickupTime = () => {
+    if (!pickupDate || !pickupDate.isSame(dayjs(), 'day')) {
+      return {
+        disabledHours: () => [],
+        disabledMinutes: () => [],
+      };
+    }
+
+    const now = dayjs();
+    const currentHour = now.hour();
+    const currentMinute = now.minute();
+
+    return {
+      disabledHours: () => {
+        const hours = [];
+        for (let i = 0; i < currentHour; i++) {
+          hours.push(i);
+        }
+        return hours;
+      },
+      disabledMinutes: (selectedHour) => {
+        if (selectedHour === currentHour) {
+          const minutes = [];
+          for (let i = 0; i <= currentMinute; i++) {
+            minutes.push(i);
+          }
+          return minutes;
+        }
+        return [];
+      },
+    };
+  };
+
+  // Disable return times that don't meet minimum 3-hour requirement
+  const disabledReturnTime = () => {
+    if (!pickupDate || !pickupTime || !returnDate) {
+      return {
+        disabledHours: () => [],
+        disabledMinutes: () => [],
+      };
+    }
+
+    // If return date is same as pickup date, check time constraints
+    if (returnDate.isSame(pickupDate, 'day')) {
+      const minReturnTime = pickupTime.add(3, 'hour');
+      const minHour = minReturnTime.hour();
+      const minMinute = minReturnTime.minute();
+
+      return {
+        disabledHours: () => {
+          const hours = [];
+          for (let i = 0; i < minHour; i++) {
+            hours.push(i);
+          }
+          return hours;
+        },
+        disabledMinutes: (selectedHour) => {
+          if (selectedHour === minHour) {
+            const minutes = [];
+            for (let i = 0; i < minMinute; i++) {
+              minutes.push(i);
+            }
+            return minutes;
+          } else if (selectedHour < minHour) {
+            // Disable all minutes for hours before minimum hour
+            const minutes = [];
+            for (let i = 0; i < 60; i++) {
+              minutes.push(i);
+            }
+            return minutes;
+          }
+          return [];
+        },
+      };
+    }
+
+    return {
+      disabledHours: () => [],
+      disabledMinutes: () => [],
+    };
+  };
+
+  // Create location options from API data
+  const createLocationOptions = () => {
+    const apiOptions = locations?.data?.result?.map(location => ({
+      value: location._id,
+      label: location.location
+    })) || [];
+
+    return [
+      ...apiOptions,
+      {
+        value: 'custom',
+        label: (
+          <div className="flex items-center text-green-500">
+            <PlusOutlined className="mr-1" />
+            <span>Add custom location</span>
+          </div>
+        )
+      }
+    ];
+  };
+
+  const locationOptions = createLocationOptions();
 
   return (
     <div className="relative w-full min-h-[600px] md:h-[800px]">
@@ -242,12 +393,9 @@ const Hero = () => {
                     style={{ borderColor: errors.pickupDate ? '#ff4d4f' : '#10B981' }}
                     renderExtraFooter={() => null}
                     allowClear={false}
-                    onChange={(date) => {
-                      setPickupDate(date);
-                      setErrors({ ...errors, pickupDate: '' });
-                    }}
+                    disabledDate={disabledPickupDate}
+                    onChange={handlePickupDateChange}
                     value={pickupDate}
-                    disabledDate={disabledDate}
                   />
                   {errors.pickupDate && <div className="text-red-500 text-xs mt-1">{errors.pickupDate}</div>}
                 </div>
@@ -261,10 +409,8 @@ const Hero = () => {
                     suffixIcon={<ClockCircleOutlined className="text-green-500" />}
                     style={{ borderColor: errors.pickupTime ? '#ff4d4f' : '#10B981' }}
                     allowClear={false}
-                    onChange={(time) => {
-                      setPickupTime(time);
-                      setErrors({ ...errors, pickupTime: '' });
-                    }}
+                    disabledTime={disabledPickupTime}
+                    onChange={handlePickupTimeChange}
                     value={pickupTime}
                   />
                   {errors.pickupTime && <div className="text-red-500 text-xs mt-1">{errors.pickupTime}</div>}
@@ -280,15 +426,9 @@ const Hero = () => {
                     style={{ borderColor: errors.returnDate ? '#ff4d4f' : '#10B981' }}
                     renderExtraFooter={() => null}
                     allowClear={false}
-                    onChange={(date) => {
-                      setReturnDate(date);
-                      setErrors({ ...errors, returnDate: '' });
-                    }}
+                    disabledDate={disabledReturnDate}
+                    onChange={handleReturnDateChange}
                     value={returnDate}
-                    disabledDate={(current) => {
-                      // Can't select dates before pickup date
-                      return pickupDate ? current && current < pickupDate.startOf('day') : false;
-                    }}
                   />
                   {errors.returnDate && <div className="text-red-500 text-xs mt-1">{errors.returnDate}</div>}
                 </div>
@@ -302,10 +442,8 @@ const Hero = () => {
                     suffixIcon={<ClockCircleOutlined className="text-green-500" />}
                     style={{ borderColor: errors.returnTime ? '#ff4d4f' : '#10B981' }}
                     allowClear={false}
-                    onChange={(time) => {
-                      setReturnTime(time);
-                      setErrors({ ...errors, returnTime: '' });
-                    }}
+                    disabledTime={disabledReturnTime}
+                    onChange={handleReturnTimeChange}
                     value={returnTime}
                   />
                   {errors.returnTime && <div className="text-red-500 text-xs mt-1">{errors.returnTime}</div>}
@@ -339,11 +477,13 @@ const Hero = () => {
                   <div>
                     <Select
                       className="w-full"
-                      value={pickupLocation || undefined}
+                      value={pickupLocationId || undefined}
                       onChange={handlePickupLocationChange}
                       options={locationOptions}
                       style={{ borderColor: errors.pickupLocation ? '#ff4d4f' : '#10B981' }}
                       placeholder="Select your pickup location"
+                      loading={locationsLoading}
+                      notFoundContent={locationsLoading ? <Spin size="small" /> : "No locations found"}
                     />
                     {errors.pickupLocation && <div className="text-red-500 text-xs mt-1">{errors.pickupLocation}</div>}
                   </div>
@@ -377,12 +517,14 @@ const Hero = () => {
                   <div>
                     <Select
                       className="w-full"
-                      value={returnLocation || undefined}
+                      value={returnLocationId || undefined}
                       onChange={handleReturnLocationChange}
                       options={locationOptions}
                       disabled={sameLocation}
                       style={{ borderColor: errors.returnLocation ? '#ff4d4f' : '#10B981' }}
                       placeholder="Select your return location"
+                      loading={locationsLoading}
+                      notFoundContent={locationsLoading ? <Spin size="small" /> : "No locations found"}
                     />
                     {errors.returnLocation && <div className="text-red-500 text-xs mt-1">{errors.returnLocation}</div>}
                   </div>

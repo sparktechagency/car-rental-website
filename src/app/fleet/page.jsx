@@ -1,10 +1,12 @@
-"use client"
+"use client";
 import { CalendarOutlined, ClockCircleOutlined, PlusOutlined, SearchOutlined, StarFilled } from '@ant-design/icons';
 import { Button, Checkbox, DatePicker, Input, Modal, Pagination, Select, Spin, TimePicker } from 'antd';
-import Head from 'next/head';
-import { useState } from 'react';
+import dayjs from 'dayjs';
+import debounce from 'lodash.debounce';
+import { useEffect, useRef, useState } from 'react';
 import { baseURL } from '../../../utils/BaseURL';
 import { useGetAllVehiclesQuery } from '../../features/fleet_page/FleetApi';
+import { useGetLocationQuery } from '../../features/LocationApi';
 
 export default function Fleet() {
   // Vehicle listing states
@@ -12,19 +14,26 @@ export default function Fleet() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCar, setSelectedCar] = useState(null);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const searchInputRef = useRef(null);
 
   // Reservation form states
+  const now = dayjs();
+  const defaultReturnTime = now.add(3, 'hour');
+
   const [sameLocation, setSameLocation] = useState(true);
-  const [pickupLocation, setPickupLocation] = useState('Muritala Mohammed International');
-  const [returnLocation, setReturnLocation] = useState('Muritala Mohammed International');
+  const [pickupLocationId, setPickupLocationId] = useState('');
+  const [returnLocationId, setReturnLocationId] = useState('');
+  const [pickupLocationName, setPickupLocationName] = useState('');
+  const [returnLocationName, setReturnLocationName] = useState('');
   const [customPickupLocation, setCustomPickupLocation] = useState('');
   const [customReturnLocation, setCustomReturnLocation] = useState('');
   const [showCustomPickupInput, setShowCustomPickupInput] = useState(false);
   const [showCustomReturnInput, setShowCustomReturnInput] = useState(false);
-  const [pickupDate, setPickupDate] = useState(null);
-  const [returnDate, setReturnDate] = useState(null);
-  const [pickupTime, setPickupTime] = useState(null);
-  const [returnTime, setReturnTime] = useState(null);
+  const [pickupDate, setPickupDate] = useState(now);
+  const [returnDate, setReturnDate] = useState(defaultReturnTime);
+  const [pickupTime, setPickupTime] = useState(now);
+  const [returnTime, setReturnTime] = useState(defaultReturnTime);
   const [isloading, setIsloading] = useState(false);
   const [errors, setErrors] = useState({
     pickupDate: '',
@@ -35,48 +44,85 @@ export default function Fleet() {
     returnLocation: ''
   });
 
-  const { data, isLoading, error } = useGetAllVehiclesQuery({ searchTerm, page: currentPage });
+  // API queries
+  const { data: vehiclesData, isLoading: vehiclesLoading, error: vehiclesError } =
+    useGetAllVehiclesQuery({ searchTerm: debouncedSearchTerm, page: currentPage });
+  const { data: locationsData, isLoading: locationsLoading } = useGetLocationQuery();
 
-  const handleValues = () => {
-    return {
-      pickupDate: pickupDate ? pickupDate.format('YYYY-MM-DD') : null,
-      returnDate: returnDate ? returnDate.format('YYYY-MM-DD') : null,
-      pickupTime: pickupTime ? pickupTime.format('HH:mm') : null,
-      returnTime: returnTime ? returnTime.format('HH:mm') : null,
-      pickupLocation,
-      returnLocation,
-      sameLocation,
-      ...selectedCar
+  // Debounce search term
+  useEffect(() => {
+    const debouncer = debounce(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setCurrentPage(1);
+    }, 500);
+    debouncer();
+    return () => {
+      debouncer.cancel();
     };
-  };
+  }, [searchTerm]);
+
+  // Focus search input when no results
+  useEffect(() => {
+    if (vehiclesData?.data?.result?.length === 0 && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [vehiclesData]);
+
+  // Set default location when locations are loaded
+  useEffect(() => {
+    if (locationsData?.data?.result?.length > 0) {
+      const defaultLocation = locationsData.data.result[0];
+      setPickupLocationId(defaultLocation._id);
+      setPickupLocationName(defaultLocation.location);
+      setReturnLocationId(defaultLocation._id);
+      setReturnLocationName(defaultLocation.location);
+    }
+  }, [locationsData]);
+
+  const handleValues = () => ({
+    pickupDate: pickupDate ? pickupDate.format('YYYY-MM-DD') : null,
+    returnDate: returnDate ? returnDate.format('YYYY-MM-DD') : null,
+    pickupTime: pickupTime ? pickupTime.format('HH:mm') : null,
+    returnTime: returnTime ? returnTime.format('HH:mm') : null,
+    pickupLocationId,
+    pickupLocationName,
+    returnLocationId,
+    returnLocationName,
+    sameLocation,
+    vehicle: selectedCar
+  });
 
   const handleLocationChange = (checked) => {
     setSameLocation(checked);
     if (checked) {
-      setReturnLocation(pickupLocation);
+      setReturnLocationId(pickupLocationId);
+      setReturnLocationName(pickupLocationName);
       setErrors({ ...errors, returnLocation: '' });
     }
   };
 
-  const handlePickupLocationChange = (value) => {
+  const handlePickupLocationChange = (value, option) => {
     if (value === 'custom') {
       setShowCustomPickupInput(true);
       return;
     }
-    setPickupLocation(value);
+    setPickupLocationId(value);
+    setPickupLocationName(option.label);
     setErrors({ ...errors, pickupLocation: '' });
     if (sameLocation) {
-      setReturnLocation(value);
+      setReturnLocationId(value);
+      setReturnLocationName(option.label);
       setErrors({ ...errors, returnLocation: '' });
     }
   };
 
-  const handleReturnLocationChange = (value) => {
+  const handleReturnLocationChange = (value, option) => {
     if (value === 'custom') {
       setShowCustomReturnInput(true);
       return;
     }
-    setReturnLocation(value);
+    setReturnLocationId(value);
+    setReturnLocationName(option.label);
     setErrors({ ...errors, returnLocation: '' });
   };
 
@@ -85,10 +131,12 @@ export default function Fleet() {
       setErrors({ ...errors, pickupLocation: 'Please enter a pickup location' });
       return;
     }
-    setPickupLocation(customPickupLocation);
+    setPickupLocationId('custom');
+    setPickupLocationName(customPickupLocation);
     setErrors({ ...errors, pickupLocation: '' });
     if (sameLocation) {
-      setReturnLocation(customPickupLocation);
+      setReturnLocationId('custom');
+      setReturnLocationName(customPickupLocation);
       setErrors({ ...errors, returnLocation: '' });
     }
     setShowCustomPickupInput(false);
@@ -100,10 +148,66 @@ export default function Fleet() {
       setErrors({ ...errors, returnLocation: 'Please enter a return location' });
       return;
     }
-    setReturnLocation(customReturnLocation);
+    setReturnLocationId('custom');
+    setReturnLocationName(customReturnLocation);
     setErrors({ ...errors, returnLocation: '' });
     setShowCustomReturnInput(false);
     setCustomReturnLocation('');
+  };
+
+  const handlePickupDateChange = (date) => {
+    setPickupDate(date);
+    setErrors({ ...errors, pickupDate: '' });
+    if (date && pickupTime) {
+      const pickupDateTime = dayjs(date).hour(pickupTime.hour()).minute(pickupTime.minute());
+      const returnDateTime = pickupDateTime.add(3, 'hour');
+      setReturnDate(returnDateTime);
+      setReturnTime(returnDateTime);
+    } else if (date && !returnDate) {
+      setReturnDate(date);
+    }
+  };
+
+  const handlePickupTimeChange = (time) => {
+    setPickupTime(time);
+    setErrors({ ...errors, pickupTime: '' });
+    if (pickupDate && pickupDate.isSame(dayjs(), 'day') && time) {
+      const pickupDateTime = dayjs(pickupDate).hour(time.hour()).minute(time.minute());
+      if (pickupDateTime.isBefore(dayjs())) {
+        setErrors({ ...errors, pickupTime: 'Pickup time cannot be in the past' });
+        return;
+      }
+    }
+    if (pickupDate && time) {
+      const pickupDateTime = dayjs(pickupDate).hour(time.hour()).minute(time.minute());
+      const returnDateTime = pickupDateTime.add(3, 'hour');
+      setReturnDate(returnDateTime);
+      setReturnTime(returnDateTime);
+    }
+  };
+
+  const handleReturnDateChange = (date) => {
+    setReturnDate(date);
+    setErrors({ ...errors, returnDate: '' });
+  };
+
+  const handleReturnTimeChange = (time) => {
+    setReturnTime(time);
+    setErrors({ ...errors, returnTime: '' });
+  };
+
+  const isPickupInPast = (date, time) => {
+    if (!date || !time) return false;
+    const pickupDateTime = dayjs(date).hour(time.hour()).minute(time.minute());
+    return pickupDateTime.isBefore(dayjs());
+  };
+
+  const isMinimumDuration = (pickupDate, pickupTime, returnDate, returnTime) => {
+    if (!pickupDate || !pickupTime || !returnDate || !returnTime) return true;
+    const pickup = dayjs(pickupDate).hour(pickupTime.hour()).minute(pickupTime.minute());
+    const returnDateTime = dayjs(returnDate).hour(returnTime.hour()).minute(returnTime.minute());
+    const diffInHours = returnDateTime.diff(pickup, 'hour', true);
+    return diffInHours >= 3;
   };
 
   const validateForm = () => {
@@ -133,12 +237,27 @@ export default function Fleet() {
       newErrors.returnTime = 'Please select a return time';
       valid = false;
     }
-    if (!pickupLocation) {
+    if (!pickupLocationId) {
       newErrors.pickupLocation = 'Please select a pickup location';
       valid = false;
     }
-    if (!returnLocation) {
+    if (!returnLocationId) {
       newErrors.returnLocation = 'Please select a return location';
+      valid = false;
+    }
+
+    if (pickupDate && pickupTime && isPickupInPast(pickupDate, pickupTime)) {
+      newErrors.pickupTime = 'Pickup date and time cannot be in the past';
+      valid = false;
+    }
+
+    if (pickupDate && pickupTime && returnDate && returnTime && !isMinimumDuration(pickupDate, pickupTime, returnDate, returnTime)) {
+      newErrors.returnTime = 'Minimum reservation length is 3 hours';
+      valid = false;
+    }
+
+    if (pickupDate && returnDate && returnDate.isBefore(pickupDate)) {
+      newErrors.returnDate = 'Return date cannot be before pickup date';
       valid = false;
     }
 
@@ -153,13 +272,8 @@ export default function Fleet() {
     const values = handleValues();
     setIsloading(true);
 
-    // Get existing reservations from localStorage or initialize empty array
     const existingReservations = JSON.parse(localStorage.getItem("reservation")) || [];
-
-    // Add new reservation to the array
     const updatedReservations = [...existingReservations, values];
-
-    // Save back to localStorage
     localStorage.setItem("reservation", JSON.stringify(updatedReservations));
 
     setIsloading(false);
@@ -174,18 +288,22 @@ export default function Fleet() {
 
   const handleCancel = () => {
     setIsModalOpen(false);
-    // Reset form state when modal is closed
     setSameLocation(true);
-    setPickupLocation('Muritala Mohammed International');
-    setReturnLocation('Muritala Mohammed International');
+    if (locationsData?.data?.result?.length > 0) {
+      const defaultLocation = locationsData.data.result[0];
+      setPickupLocationId(defaultLocation._id);
+      setPickupLocationName(defaultLocation.location);
+      setReturnLocationId(defaultLocation._id);
+      setReturnLocationName(defaultLocation.location);
+    }
     setCustomPickupLocation('');
     setCustomReturnLocation('');
     setShowCustomPickupInput(false);
     setShowCustomReturnInput(false);
-    setPickupDate(null);
-    setReturnDate(null);
-    setPickupTime(null);
-    setReturnTime(null);
+    setPickupDate(now);
+    setReturnDate(defaultReturnTime);
+    setPickupTime(now);
+    setReturnTime(defaultReturnTime);
     setErrors({
       pickupDate: '',
       pickupTime: '',
@@ -198,51 +316,132 @@ export default function Fleet() {
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1);
   };
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
 
-  const locationOptions = [
-    { value: 'Muritala Mohammed International', label: 'Muritala Mohammed International' },
-    { value: 'Lagos Airport', label: 'Lagos Airport' },
-    { value: 'Ikeja City Mall', label: 'Ikeja City Mall' },
-    {
-      value: 'custom',
-      label: (
-        <div className="flex items-center text-green-500">
-          <PlusOutlined className="mr-1" />
-          <span>Add custom location</span>
+  const disabledPickupDate = (current) => {
+    return current && current < dayjs().startOf('day');
+  };
+
+  const disabledReturnDate = (current) => {
+    const minDate = pickupDate || dayjs();
+    return current && current < minDate.startOf('day');
+  };
+
+  const disabledPickupTime = () => {
+    if (!pickupDate || !pickupDate.isSame(dayjs(), 'day')) {
+      return { disabledHours: () => [], disabledMinutes: () => [] };
+    }
+    const now = dayjs();
+    const currentHour = now.hour();
+    const currentMinute = now.minute();
+    return {
+      disabledHours: () => {
+        const hours = [];
+        for (let i = 0; i < currentHour; i++) hours.push(i);
+        return hours;
+      },
+      disabledMinutes: (selectedHour) => {
+        if (selectedHour === currentHour) {
+          const minutes = [];
+          for (let i = 0; i <= currentMinute; i++) minutes.push(i);
+          return minutes;
+        }
+        return [];
+      },
+    };
+  };
+
+  const disabledReturnTime = () => {
+    if (!pickupDate || !pickupTime || !returnDate) {
+      return { disabledHours: () => [], disabledMinutes: () => [] };
+    }
+    if (returnDate.isSame(pickupDate, 'day')) {
+      const minReturnTime = pickupTime.add(3, 'hour');
+      const minHour = minReturnTime.hour();
+      const minMinute = minReturnTime.minute();
+      return {
+        disabledHours: () => {
+          const hours = [];
+          for (let i = 0; i < minHour; i++) hours.push(i);
+          return hours;
+        },
+        disabledMinutes: (selectedHour) => {
+          if (selectedHour === minHour) {
+            const minutes = [];
+            for (let i = 0; i < minMinute; i++) minutes.push(i);
+            return minutes;
+          } else if (selectedHour < minHour) {
+            const minutes = [];
+            for (let i = 0; i < 60; i++) minutes.push(i);
+            return minutes;
+          }
+          return [];
+        },
+      };
+    }
+    return { disabledHours: () => [], disabledMinutes: () => [] };
+  };
+
+  const createLocationOptions = () => {
+    const apiOptions = locationsData?.data?.result?.map(location => ({
+      value: location._id,
+      label: location.location
+    })) || [];
+
+    return [
+      ...apiOptions,
+      {
+        value: 'custom',
+        label: (
+          <div className="flex items-center text-green-500">
+            <PlusOutlined className="mr-1" />
+            <span>Add custom location</span>
+          </div>
+        )
+      }
+    ];
+  };
+
+  const locationOptions = createLocationOptions();
+
+  if (vehiclesLoading) {
+    return <div className="container mx-auto p-4 text-center"><Spin size="large" /></div>;
+  }
+  if (vehiclesError) {
+    return <div className="container mx-auto p-4 text-center text-red-500">Error loading vehicles: {vehiclesError.message}</div>;
+  }
+  if (!vehiclesData?.data?.result || vehiclesData.data.result.length === 0) {
+    return (
+      <div className="container mx-auto p-4 text-center">
+        <div className="max-w-xl mx-auto mb-8">
+          <Input
+            ref={searchInputRef}
+            size="large"
+            placeholder="Search by brand, model, or type"
+            prefix={<SearchOutlined />}
+            className="rounded-lg"
+            value={searchTerm}
+            onChange={handleSearch}
+            allowClear
+            autoFocus
+          />
         </div>
-      )
-    },
-  ];
-
-  if (isLoading) {
-    return <div className="container mx-auto p-4 text-center">Loading...</div>;
-  }
-
-  if (error) {
-    return <div className="container mx-auto p-4 text-center text-red-500">Error loading vehicles: {error.message}</div>;
-  }
-
-  if (!data?.data?.result || data.data.result.length === 0) {
-    return <div className="container mx-auto p-4 text-center">No vehicles available</div>;
+        <p>No vehicles found matching your search criteria.</p>
+      </div>
+    );
   }
 
   return (
     <div className="container mx-auto p-4">
-      <Head>
-        <title>Premium Car Rentals</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
       <div className="max-w-xl mx-auto mb-8">
         <Input
+          ref={searchInputRef}
           size="large"
-          placeholder="Search"
+          placeholder="Search by brand, model, or type"
           prefix={<SearchOutlined />}
           className="rounded-lg"
           value={searchTerm}
@@ -252,20 +451,22 @@ export default function Fleet() {
       </div>
 
       <div className="space-y-6">
-        {data.data.result.map((car) => (
+        {vehiclesData.data.result.map((car) => (
           <div key={car._id} className="flex flex-col md:flex-row bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
-            {/* Car Image */}
+            {/* Image */}
             <div className="md:w-64 lg:w-72 bg-gray-100">
               <img
-                src={`${baseURL}${car.image}` || '/images/default-car.jpg'}
+                src={car.image ? `${baseURL}${car.image}` : '/images/default-car.jpg'}
                 alt={`${car.brand} ${car.model}`}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = '/images/default-car.jpg';
+                }}
               />
             </div>
-
-            {/* Content Section */}
+            {/* Content */}
             <div className="flex-1 p-4 md:p-6">
-              {/* Top Section - Brand and Rating */}
               <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-2">
                 <div>
                   <h2 className="text-xl font-bold text-gray-900">{car.brand} {car.model}</h2>
@@ -277,21 +478,13 @@ export default function Fleet() {
                 </div>
                 <div className="mt-2 md:mt-0 text-right">
                   <p className="text-sm text-gray-600">Starts From</p>
-                  <p className="text-lg font-bold text-green-500">₦ {car.dailyRate.toLocaleString()}/Day</p>
+                  <p className="text-lg font-bold text-green-500">₦ {car.dailyRate?.toLocaleString() || '0'}/Day</p>
                 </div>
               </div>
-
-              {/* Description */}
               <div className="mb-4">
-                <p className="text-gray-700 mb-3">
-                  {car.shortDescription || 'Premium vehicle for your business needs or luxury trips.'}
-                </p>
-                <p className="text-gray-700">
-                  {car.vehicleType} - {car.fuelType} - {car.transmissionType}
-                </p>
+                <p className="text-gray-700 mb-3">{car.shortDescription || 'Premium vehicle for your business needs or luxury trips.'}</p>
+                <p className="text-gray-700">{car.vehicleType} - {car.fuelType} - {car.transmissionType}</p>
               </div>
-
-              {/* Features and Book Button */}
               <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center space-x-4 mb-4 md:mb-0">
                   <div className="flex items-center space-x-1 text-gray-700">
@@ -315,8 +508,7 @@ export default function Fleet() {
                 </div>
                 <button
                   onClick={() => showModal(car)}
-                  className={`bg-yellow-500 hover:bg-yellow-600 text-gray-900 cursor-pointer font-bold py-3 px-6 rounded ${car.status !== 'AVAILABLE' ? 'opacity-50 cursor-not-allowed' : ''
-                    }`}
+                  className={`bg-yellow-500 hover:bg-yellow-600 text-gray-900 cursor-pointer font-bold py-3 px-6 rounded ${car.status !== 'AVAILABLE' ? 'opacity-50 cursor-not-allowed' : ''}`}
                   disabled={car.status !== 'AVAILABLE'}
                 >
                   {car.status === 'AVAILABLE' ? 'BOOK NOW' : 'RENTED'}
@@ -327,12 +519,11 @@ export default function Fleet() {
         ))}
       </div>
 
-      {/* Pagination */}
-      <div className="mt-8 flex justify-center">
+      <div className="my-6 flex justify-end">
         <Pagination
           current={currentPage}
-          total={data.data.total || 0}
-          pageSize={data.data.limit || 10}
+          total={vehiclesData.data.total || 0}
+          pageSize={vehiclesData.data.limit || 10}
           onChange={handlePageChange}
           showSizeChanger={false}
           responsive
@@ -347,22 +538,27 @@ export default function Fleet() {
         footer={null}
         width={500}
         centered
+        destroyOnClose
       >
         <div className="w-full flex items-center justify-center">
           <div className="bg-white rounded-lg shadow-sm px-4 sm:px-6 py-6 sm:py-8 w-full max-w-md">
-            <Spin size='small' spinning={isloading} tip="Processing your reservation...">
+            <Spin spinning={isloading} tip="Processing your reservation...">
               <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-6 text-gray-800">RESERVATION</h2>
               {selectedCar && (
                 <div className="mb-4 p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center">
                     <img
-                      src={`${baseURL}${selectedCar.image}`}
+                      src={selectedCar.image ? `${baseURL}${selectedCar.image}` : '/images/default-car.jpg'}
                       alt={`${selectedCar.brand} ${selectedCar.model}`}
                       className="w-16 h-16 object-cover rounded mr-3"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/images/default-car.jpg';
+                      }}
                     />
                     <div>
                       <h3 className="font-bold">{selectedCar.brand} {selectedCar.model}</h3>
-                      <p className="text-green-600 font-semibold">₦{selectedCar.dailyRate.toLocaleString()}/day</p>
+                      <p className="text-green-600 font-semibold">₦{selectedCar.dailyRate?.toLocaleString() || '0'}/day</p>
                     </div>
                   </div>
                 </div>
@@ -376,18 +572,14 @@ export default function Fleet() {
                     className="w-full"
                     format="DD/MM/YYYY"
                     suffixIcon={<CalendarOutlined className="text-green-500" />}
-                    popupClassName="ant-picker-dropdown"
                     style={{ borderColor: errors.pickupDate ? '#ff4d4f' : '#10B981' }}
                     allowClear={false}
-                    onChange={(date) => {
-                      setPickupDate(date);
-                      setErrors({ ...errors, pickupDate: '' });
-                    }}
+                    disabledDate={disabledPickupDate}
+                    onChange={handlePickupDateChange}
                     value={pickupDate}
                   />
                   {errors.pickupDate && <div className="text-red-500 text-xs mt-1">{errors.pickupDate}</div>}
                 </div>
-
                 {/* Pick-up Time */}
                 <div className="col-span-1">
                   <TimePicker
@@ -397,15 +589,12 @@ export default function Fleet() {
                     suffixIcon={<ClockCircleOutlined className="text-green-500" />}
                     style={{ borderColor: errors.pickupTime ? '#ff4d4f' : '#10B981' }}
                     allowClear={false}
-                    onChange={(time) => {
-                      setPickupTime(time);
-                      setErrors({ ...errors, pickupTime: '' });
-                    }}
+                    disabledTime={disabledPickupTime}
+                    onChange={handlePickupTimeChange}
                     value={pickupTime}
                   />
                   {errors.pickupTime && <div className="text-red-500 text-xs mt-1">{errors.pickupTime}</div>}
                 </div>
-
                 {/* Return Date */}
                 <div className="col-span-1">
                   <DatePicker
@@ -415,15 +604,12 @@ export default function Fleet() {
                     suffixIcon={<CalendarOutlined className="text-green-500" />}
                     style={{ borderColor: errors.returnDate ? '#ff4d4f' : '#10B981' }}
                     allowClear={false}
-                    onChange={(date) => {
-                      setReturnDate(date);
-                      setErrors({ ...errors, returnDate: '' });
-                    }}
+                    disabledDate={disabledReturnDate}
+                    onChange={handleReturnDateChange}
                     value={returnDate}
                   />
                   {errors.returnDate && <div className="text-red-500 text-xs mt-1">{errors.returnDate}</div>}
                 </div>
-
                 {/* Return Time */}
                 <div className="col-span-1">
                   <TimePicker
@@ -433,10 +619,8 @@ export default function Fleet() {
                     suffixIcon={<ClockCircleOutlined className="text-green-500" />}
                     style={{ borderColor: errors.returnTime ? '#ff4d4f' : '#10B981' }}
                     allowClear={false}
-                    onChange={(time) => {
-                      setReturnTime(time);
-                      setErrors({ ...errors, returnTime: '' });
-                    }}
+                    disabledTime={disabledReturnTime}
+                    onChange={handleReturnTimeChange}
                     value={returnTime}
                   />
                   {errors.returnTime && <div className="text-red-500 text-xs mt-1">{errors.returnTime}</div>}
@@ -470,12 +654,25 @@ export default function Fleet() {
                   <div>
                     <Select
                       className="w-full"
-                      value={pickupLocation || undefined}
+                      value={pickupLocationId || undefined}
                       onChange={handlePickupLocationChange}
                       options={locationOptions}
                       style={{ borderColor: errors.pickupLocation ? '#ff4d4f' : '#10B981' }}
                       placeholder="Select your pickup location"
-                    />
+                      loading={locationsLoading}
+                      notFoundContent={locationsLoading ? <Spin size="small" /> : "No locations found"}
+                      optionLabelProp="label"
+                    >
+                      {locationOptions.map(option => (
+                        <Select.Option
+                          key={option.value}
+                          value={option.value}
+                          label={option.label}
+                        >
+                          {option.label}
+                        </Select.Option>
+                      ))}
+                    </Select>
                     {errors.pickupLocation && <div className="text-red-500 text-xs mt-1">{errors.pickupLocation}</div>}
                   </div>
                 )}
@@ -508,13 +705,26 @@ export default function Fleet() {
                   <div>
                     <Select
                       className="w-full"
-                      value={returnLocation || undefined}
+                      value={returnLocationId || undefined}
                       onChange={handleReturnLocationChange}
                       options={locationOptions}
                       disabled={sameLocation}
                       style={{ borderColor: errors.returnLocation ? '#ff4d4f' : '#10B981' }}
                       placeholder="Select your return location"
-                    />
+                      loading={locationsLoading}
+                      notFoundContent={locationsLoading ? <Spin size="small" /> : "No locations found"}
+                      optionLabelProp="label"
+                    >
+                      {locationOptions.map(option => (
+                        <Select.Option
+                          key={option.value}
+                          value={option.value}
+                          label={option.label}
+                        >
+                          {option.label}
+                        </Select.Option>
+                      ))}
+                    </Select>
                     {errors.returnLocation && <div className="text-red-500 text-xs mt-1">{errors.returnLocation}</div>}
                   </div>
                 )}
@@ -525,7 +735,6 @@ export default function Fleet() {
                 <Checkbox
                   checked={sameLocation}
                   onChange={(e) => handleLocationChange(e.target.checked)}
-                  className="text-primary"
                 />
                 <span className="ml-2 text-sm text-gray-600">Same as pick-up location</span>
               </div>
