@@ -1,5 +1,4 @@
 // pages/checkout.js
-
 "use client";
 import {
   ArrowLeftOutlined,
@@ -7,8 +6,8 @@ import {
   CarOutlined,
   EnvironmentOutlined,
   SettingOutlined,
-  UserOutlined
-} from '@ant-design/icons';
+  UserOutlined,
+} from "@ant-design/icons";
 import {
   Button,
   Checkbox,
@@ -17,74 +16,108 @@ import {
   Input,
   Select,
   Typography,
-  message
-} from 'antd';
+  message,
+} from "antd";
 import PhoneInput from "antd-phone-input";
-import { useRouter } from 'next/navigation';
-import { baseURL } from '../../../utils/BaseURL';
-import { useCreatingBookingMutation } from '../../features/reservation_page/reservationApi';
+import { useRouter } from "next/navigation";
+import { baseURL } from "../../../utils/BaseURL";
+import { useCreatingBookingMutation } from "../../features/reservation_page/reservationApi";
 
 const { Title } = Typography;
 const { Option } = Select;
 
 export default function Checkout() {
   const [createBooking, { isLoading }] = useCreatingBookingMutation();
-  const reservationData = typeof window !== 'undefined' ? localStorage.getItem("reservation") : null;
-  const reservation = reservationData ? JSON.parse(reservationData) : [];
   const [messageApi, contextHolder] = message.useMessage();
-
   const [form] = Form.useForm();
   const router = useRouter();
 
+  // Get reservation data from localStorage
+  const reservationData =
+    typeof window !== "undefined" ? localStorage.getItem("reservation") : null;
+  const reservation = reservationData ? JSON.parse(reservationData) : [];
+
+  if (!reservation || reservation.length === 0) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        {contextHolder}
+        <div className="bg-white p-8 rounded-lg shadow">
+          <h2 className="text-2xl font-bold mb-4">No Reservation Found</h2>
+          <p className="mb-6">
+            It seems you don't have any active reservations. Please start a new
+            reservation.
+          </p>
+          <Button
+            type="primary"
+            onClick={() => router.push("/")}
+            className="bg-green-500"
+          >
+            Back to Home
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const item = reservation[0];
+
+  // Calculate booking duration in days
+  const pickupDate = new Date(item.pickupDate);
+  const returnDate = new Date(item.returnDate);
+  const durationDays =
+    Math.ceil((returnDate - pickupDate) / (1000 * 60 * 60 * 24)) || 1;
+
+  // Calculate prices
+  const carRentalFee = item.dailyRate * durationDays;
+  const extrasPrice = item.extraCost || 0;
+  const subtotal = carRentalFee + extrasPrice;
+  const vat = subtotal * 0.075;
+  const total = subtotal + vat;
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+    return date.toLocaleDateString("en-GB");
+  };
+
+  const formatTime = (timeString) => {
+    if (!timeString) return "";
+    const time = new Date(`2000-01-01T${timeString}`);
+    if (isNaN(time.getTime())) return timeString;
+    return time.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   const onFinish = async (values) => {
     try {
-      if (!reservation || reservation.length === 0) {
-        messageApi.error('No reservation data found');
-        return;
-      }
-
-      const item = reservation[0];
-
-      // Validate and format dates
-      const pickupDate = new Date(item.pickupDate);
-      const returnDate = new Date(item.returnDate);
-
       // Combine date and time
-      const [pickupHours, pickupMinutes] = item.pickupTime.split(':');
-      const [returnHours, returnMinutes] = item.returnTime.split(':');
+      const [pickupHours, pickupMinutes] = item.pickupTime.split(":");
+      const [returnHours, returnMinutes] = item.returnTime.split(":");
 
       pickupDate.setHours(pickupHours, pickupMinutes);
       returnDate.setHours(returnHours, returnMinutes);
 
-      if (isNaN(pickupDate.getTime()) || isNaN(returnDate.getTime())) {
-        messageApi.error('Invalid date format');
-        return;
-      }
-
       if (pickupDate >= returnDate) {
-        messageApi.error('Return date must be after pickup date');
-        return;
-      }
-
-      // Validate required IDs
-      if (!item._id) {
-        messageApi.error('Vehicle ID is missing');
+        messageApi.error("Return date must be after pickup date");
         return;
       }
 
       // Format phone
-      const phoneNumber = values.phone?.countryCode && values.phone?.phoneNumber
-        ? `+${values.phone.countryCode}${values.phone.phoneNumber}`
-        : '';
+      const phoneNumber =
+        values.phone?.countryCode && values.phone?.phoneNumber
+          ? `+${values.phone.countryCode}${values.phone.phoneNumber}`
+          : "";
 
       // Prepare extra services
       const extraServices = item.addedServices
         ? Object.entries(item.addedServices)
-          .filter(([_, service]) => service?.added)
-          .map(([serviceId, service]) => ({
-            serviceId,
-            quantity: service.quantity || 1
-          }))
+            .filter(([_, service]) => service?.added)
+            .map(([serviceId, service]) => ({
+              serviceId,
+              quantity: service.quantity || 1,
+            }))
         : [];
 
       // Build payload
@@ -96,7 +129,7 @@ export default function Checkout() {
         returnTime: returnDate.toISOString(),
         returnLocation: item.returnLocationId,
         vehicle: item._id,
-        extraServices: extraServices,
+        extraServices,
         clientDetails: {
           firstName: values.firstName.trim(),
           lastName: values.lastName.trim(),
@@ -106,86 +139,22 @@ export default function Checkout() {
           country: values.country.trim(),
           presentAddress: values.addressLine2.trim(),
           state: values.state.trim(),
-          postCode: values.postcode.trim()
+          postCode: values.postcode.trim(),
         },
-        paymentMethod: values.paymentMethod.toUpperCase()
+        paymentMethod: values.paymentMethod.toUpperCase(),
       };
 
       const response = await createBooking(bookingPayload).unwrap();
-      console.log(response);
-
-      messageApi.success('Booking created successfully!');
-      // router.push('/BookingConfirmation?referenceId=' + item._id);
       localStorage.setItem("bookingId", item._id);
       router.push(`${response?.data?.url}`);
-
     } catch (error) {
-      console.error('Booking error:', error);
-      messageApi.error(error?.data?.message || 'Failed to create booking');
+      console.error("Booking error:", error);
+      messageApi.error(error?.data?.message || "Failed to create booking");
     }
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-      return dateString; // Return original if invalid
-    }
-    const day = date.getDate();
-    const month = date.getMonth() + 1;
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  };
 
-  const formatTime = (timeString) => {
-    if (!timeString) return '';
-
-    // Handle case where time is already in HH:mm format
-    if (timeString.includes(':')) {
-      const [hours, minutes] = timeString.split(':').map(Number);
-      if (!isNaN(hours)) {
-        const ampm = hours >= 12 ? 'pm' : 'am';
-        const displayHours = hours % 12 || 12;
-        return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
-      }
-    }
-
-    // Handle case where time is in ISO format
-    const date = new Date(timeString);
-    if (!isNaN(date.getTime())) {
-      let hours = date.getHours();
-      const minutes = date.getMinutes();
-      const ampm = hours >= 12 ? 'pm' : 'am';
-      hours = hours % 12;
-      hours = hours ? hours : 12;
-      return `${hours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
-    }
-
-    return timeString; // Return original if format is unknown
-  };
-
-  if (!reservation || reservation.length === 0) {
-    return (
-      <div className="container mx-auto px-4 py-8 text-center">
-        {contextHolder}
-        <div className="bg-white p-8 rounded-lg shadow">
-          <h2 className="text-2xl font-bold mb-4">No Reservation Found</h2>
-          <p className="mb-6">It seems you don't have any active reservations. Please start a new reservation.</p>
-          <Button
-            type="primary"
-            onClick={() => router.push('/')}
-            className="bg-green-500"
-          >
-            Back to Home
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  const item = reservation[0];
-  const subtotal = item.dailyRate + (item.extraCost || 0);
-  const vat = subtotal * 0.075;
-  const total = subtotal + vat;
+  const vehicle = reservation.length > 0 ? reservation[0] : {};
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -201,7 +170,7 @@ export default function Checkout() {
           </div>
         </div>
         <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-          <div className="bg-green-500 h-full" style={{ width: '75%' }}></div>
+          <div className="bg-green-500 h-full" style={{ width: "75%" }}></div>
         </div>
       </div>
 
@@ -209,14 +178,16 @@ export default function Checkout() {
         {/* Left sidebar */}
         <div className="lg:w-1/4 w-full">
           <div className="mb-6 border border-gray-200 rounded-md p-3">
-            <h3 className="font-bold mb-4 border-b border-gray-200 pb-3">Location</h3>
+            <h3 className="font-bold mb-4 border-b border-gray-200 pb-3">
+              Location
+            </h3>
 
             <div className="mb-4">
               <p className="font-semibold mb-2">Pick-up</p>
               <div className="flex items-center mb-2">
                 <EnvironmentOutlined className="mt-1 mr-2 text-gray-500" />
                 <div>
-                  <p className="text-base">{item.pickupLocation}</p>
+                  <p className="text-base">{vehicle.pickupLocationName}</p>
                   <p className="text-xs text-gray-500">
                     {formatDate(item.pickupDate)}, {formatTime(item.pickupTime)}
                   </p>
@@ -229,7 +200,9 @@ export default function Checkout() {
               <div className="flex items-center mb-2">
                 <EnvironmentOutlined className="mt-1 mr-2 text-gray-500" />
                 <div>
-                  <p className="text-base">{item.returnLocation}</p>
+                  <p className="text-base">
+                    {vehicle.returnLocationName}
+                  </p>
                   <p className="text-xs text-gray-500">
                     {formatDate(item.returnDate)}, {formatTime(item.returnTime)}
                   </p>
@@ -239,7 +212,9 @@ export default function Checkout() {
           </div>
 
           <div className="mb-6 border border-gray-200 p-3 rounded-md">
-            <h3 className="font-bold mb-4 border-b border-gray-200 pb-3">Selected Car</h3>
+            <h3 className="font-bold mb-4 border-b border-gray-200 pb-3">
+              Selected Car
+            </h3>
             <div className="rounded-md overflow-hidden">
               <img
                 src={`${baseURL}${item.image}` || "/images/maserati.png"}
@@ -247,9 +222,13 @@ export default function Checkout() {
                 className="w-full h-40 sm:h-48 object-cover"
               />
               <div className="p-4">
-                <h4 className="font-bold text-lg mb-1">{item.brand} | {item.model}</h4>
+                <h4 className="font-bold text-lg mb-1">
+                  {item.brand} | {item.model}
+                </h4>
                 <p className="text-xs text-gray-500 mb-1">Starts From</p>
-                <p className="text-green-500 font-bold mb-4 border-b border-gray-200 pb-4">₦ {item.dailyRate.toLocaleString()}/Day</p>
+                <p className="text-green-500 font-bold mb-4 border-b border-gray-200 pb-4">
+                  ₦ {item.dailyRate.toLocaleString()}/Day
+                </p>
 
                 <div className="flex justify-between mb-3">
                   <div className="flex items-center">
@@ -257,7 +236,9 @@ export default function Checkout() {
                     <span className="text-xs">{item.noOfSeats} Seats</span>
                   </div>
                   <div className="flex items-center">
-                    <span className="text-xs">{item.noOfLuggages} Luggages</span>
+                    <span className="text-xs">
+                      {item.noOfLuggages} Luggages
+                    </span>
                   </div>
                 </div>
 
@@ -275,16 +256,21 @@ export default function Checkout() {
             </div>
           </div>
 
-          <div className='border border-gray-200 p-3 rounded-md'>
-            <h3 className="font-bold mb-4 border-b border-gray-200 pb-3">Price</h3>
+          <div className="border border-gray-200 p-3 rounded-md">
+            <h3 className="font-bold mb-4 border-b border-gray-200 pb-3">
+              Price
+            </h3>
             <div className="space-y-3">
               <div className="flex justify-between text-sm border-b border-gray-200 pb-3">
-                <span>Car rental fee</span>
-                <span>₦{item.dailyRate.toLocaleString()}</span>
+                <span>
+                  Car rental fee ({durationDays} day
+                  {durationDays > 1 ? "s" : ""})
+                </span>
+                <span>₦{carRentalFee.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-sm border-b border-gray-200 pb-3">
                 <span>Extras price</span>
-                <span>₦{(item.extraCost || 0).toLocaleString()}</span>
+                <span>₦{extrasPrice.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-sm font-semibold border-b border-gray-200 pb-3">
                 <span>Sub-total</span>
@@ -298,7 +284,11 @@ export default function Checkout() {
               <div className="flex justify-between font-bold">
                 <span>TOTAL</span>
                 <span className="text-green-500">
-                  ₦{total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ₦
+                  {total.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </span>
               </div>
             </div>
@@ -312,29 +302,31 @@ export default function Checkout() {
             layout="vertical"
             onFinish={onFinish}
             requiredMark={false}
-            initialValues={{
-              paymentMethod: "stripe"
-            }}
+            initialValues={{ paymentMethod: "stripe" }}
           >
             {/* Personal Details Section */}
             <div className="mb-6">
-              <Title level={5} className="font-medium text-gray-800 py-2 bg-gray-50 -mx-4 sm:-mx-6 px-4 sm:px-6">Personal Details</Title>
+              <Title
+                level={5}
+                className="font-medium text-gray-800 py-2 bg-gray-50 -mx-4 sm:-mx-6 px-4 sm:px-6"
+              >
+                Personal Details
+              </Title>
               <div className="mt-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Form.Item
                     name="firstName"
                     label="First Name"
-                    rules={[{ required: true, message: 'Please enter your first name' }]}
+                    rules={[{ required: true }]}
                   >
-                    <Input className="w-full" placeholder='Enter your first name' />
+                    <Input placeholder="Enter your first name" />
                   </Form.Item>
-
                   <Form.Item
                     name="lastName"
                     label="Last Name"
-                    rules={[{ required: true, message: 'Please enter your last name' }]}
+                    rules={[{ required: true }]}
                   >
-                    <Input className="w-full" placeholder='Enter your last name' />
+                    <Input placeholder="Enter your last name" />
                   </Form.Item>
                 </div>
 
@@ -342,24 +334,19 @@ export default function Checkout() {
                   <Form.Item
                     name="email"
                     label="E-Mail"
-                    rules={[
-                      { required: true, message: 'Please enter your email' },
-                      { type: 'email', message: 'Please enter a valid email' }
-                    ]}
+                    rules={[{ required: true, type: "email" }]}
                   >
-                    <Input className="w-full" placeholder='Enter your email' />
+                    <Input placeholder="Enter your email" />
                   </Form.Item>
-
                   <Form.Item
                     name="phone"
                     label="Phone Number"
-                    rules={[{ required: true, message: 'Please enter your phone number' }]}
+                    rules={[{ required: true }]}
                   >
                     <PhoneInput
                       enableSearch
                       defaultCountry="ng"
-                      className="w-full"
-                      placeholder='Enter your phone number'
+                      placeholder="Enter your phone number"
                     />
                   </Form.Item>
                 </div>
@@ -368,15 +355,14 @@ export default function Checkout() {
                   <Form.Item
                     name="address"
                     label="Permanent Address"
-                    rules={[{ required: true, message: 'Please enter your permanent address' }]}
+                    rules={[{ required: true }]}
                   >
-                    <Input className="w-full" placeholder='Enter your permanent address' />
+                    <Input placeholder="Enter your permanent address" />
                   </Form.Item>
-
                   <Form.Item
                     name="country"
                     label="Country"
-                    rules={[{ required: true, message: 'Please select your country' }]}
+                    rules={[{ required: true }]}
                   >
                     <Select placeholder="-- Select Country --">
                       <Option value="nigeria">Nigeria</Option>
@@ -392,17 +378,16 @@ export default function Checkout() {
                   <Form.Item
                     name="addressLine2"
                     label="Present Address"
-                    rules={[{ required: true, message: 'Please enter your present address' }]}
+                    rules={[{ required: true }]}
                   >
-                    <Input className="w-full" placeholder='Enter your present address' />
+                    <Input placeholder="Enter your present address" />
                   </Form.Item>
-
                   <Form.Item
                     name="state"
                     label="Region/State"
-                    rules={[{ required: true, message: 'Please enter your region/state' }]}
+                    rules={[{ required: true }]}
                   >
-                    <Input className="w-full" placeholder='Enter your region/state' />
+                    <Input placeholder="Enter your region/state" />
                   </Form.Item>
                 </div>
 
@@ -410,9 +395,9 @@ export default function Checkout() {
                   <Form.Item
                     name="postcode"
                     label="Postcode/ZIP Code"
-                    rules={[{ required: true, message: 'Please enter your postcode' }]}
+                    rules={[{ required: true }]}
                   >
-                    <Input className="w-full" placeholder='Enter your postcode' />
+                    <Input placeholder="Enter your postcode" />
                   </Form.Item>
                 </div>
               </div>
@@ -420,18 +405,22 @@ export default function Checkout() {
 
             {/* Payment Method Section */}
             <div className="mb-6">
-              <Title level={5} className="font-medium text-gray-800 py-2 bg-gray-50 -mx-4 sm:-mx-6 px-4 sm:px-6">Payment Method</Title>
+              <Title
+                level={5}
+                className="font-medium text-gray-800 py-2 bg-gray-50 -mx-4 sm:-mx-6 px-4 sm:px-6"
+              >
+                Payment Method
+              </Title>
               <div className="mt-4">
-                <p className="mb-2">Please choose one of the available payment methods:</p>
+                <p className="mb-2">
+                  Please choose one of the available payment methods:
+                </p>
                 <ol className="list-decimal pl-5 mb-4">
-                  <li className="mb-1">STRIPE – For Non-Naira Credit/Debit card payments.</li>
+                  <li className="mb-1">
+                    STRIPE – For Non-Naira Credit/Debit card payments.
+                  </li>
                 </ol>
-
-                <Form.Item
-                  name="paymentMethod"
-                  label="Select Payment Method"
-                  rules={[{ required: true, message: 'Please select a payment method' }]}
-                >
+                <Form.Item name="paymentMethod" rules={[{ required: true }]}>
                   <Select placeholder="Select Payment Method">
                     <Option value="stripe">STRIPE</Option>
                   </Select>
@@ -441,18 +430,32 @@ export default function Checkout() {
 
             {/* Rental Terms Section */}
             <div className="mb-6">
-              <Title level={5} className="font-medium text-gray-800 py-2 bg-gray-50 -mx-4 sm:-mx-6 px-4 sm:px-6">Rental Terms</Title>
+              <Title
+                level={5}
+                className="font-medium text-gray-800 py-2 bg-gray-50 -mx-4 sm:-mx-6 px-4 sm:px-6"
+              >
+                Rental Terms
+              </Title>
               <div className="mt-4">
                 <Form.Item
                   name="termsAgreed"
                   valuePropName="checked"
-                  rules={[{
-                    validator: (_, value) =>
-                      value ? Promise.resolve() : Promise.reject(new Error('You must agree to the rental terms')),
-                  }]}
+                  rules={[
+                    {
+                      validator: (_, value) =>
+                        value
+                          ? Promise.resolve()
+                          : Promise.reject(
+                              "You must agree to the rental terms"
+                            ),
+                    },
+                  ]}
                 >
                   <Checkbox>
-                    I have read and agree to the <a href="#" className="text-green-500">rentals terms</a>
+                    I have read and agree to the{" "}
+                    <a href="#" className="text-green-500">
+                      rentals terms
+                    </a>
                   </Checkbox>
                 </Form.Item>
               </div>
@@ -467,7 +470,6 @@ export default function Checkout() {
               >
                 Back
               </Button>
-
               <Button
                 type="primary"
                 htmlType="submit"

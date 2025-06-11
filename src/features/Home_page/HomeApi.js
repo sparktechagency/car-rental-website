@@ -15,7 +15,7 @@ export const HomeApi = baseApi.injectEndpoints({
 
     getAllVehiclesRecents: builder.query({
       query: () => ({
-        url: `/vehicle?sort=createdAt&limit=4&fields=name,dailyRate,noOfDoors,noOfSeats,noOfLuggages,transmissionType,avgRating,reviewsCount,unavailable_slots,bookings`,
+        url: `/vehicle?sort=createdAt&limit=4`,
         method: "GET",
       }),
       providesTags: ["home"],
@@ -23,7 +23,7 @@ export const HomeApi = baseApi.injectEndpoints({
 
     getAllVehiclesPopular: builder.query({
       query: () => ({
-        url: `/vehicle?fields=name,dailyRate,noOfDoors,noOfSeats,noOfLuggages,transmissionType,avgRating,reviewsCount,unavailable_slots,bookings`,
+        url: `/vehicle`,
         method: "GET",
       }),
       providesTags: ["home"],

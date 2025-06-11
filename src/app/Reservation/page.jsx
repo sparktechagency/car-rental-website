@@ -195,6 +195,8 @@ export default function CarRental() {
     return `${hours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
   };
 
+  const vehicle = reservation.length > 0 ? reservation[0] : {};
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -204,71 +206,92 @@ export default function CarRental() {
           <h2 className="text-lg font-semibold">Choose your car</h2>
         </div>
         <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-          <div className="bg-green-500 h-full" style={{ width: '25%' }}></div>
+          <div className="bg-green-500 h-full" style={{ width: "25%" }}></div>
         </div>
       </div>
 
       <div className="flex flex-col md:flex-row gap-8">
         {/* Left sidebar */}
         <div className="md:w-1/4 flex flex-col gap-2">
-
           <div className=" bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
             {/* Location Header */}
             <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Location</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Location
+              </h2>
 
               {/* Pick-up Section */}
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Pick-up</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  Pick-up
+                </h3>
 
                 <div className="flex items-start gap-3 mb-3">
                   <MapPin className="w-5 h-5 text-gray-500 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-gray-700 font-medium">{reservation[0].pickupLocation}</p>
-                    <p className="text-gray-700">Airport Lagos</p>
+                    <p className="text-gray-700 font-medium">
+                      {vehicle.pickupLocationName}
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <Calendar className="w-5 h-5 text-gray-500 flex-shrink-0" />
-                  <p className="text-gray-700">{formatDate(reservation[0]?.pickupDate)}, {formatTime(reservation[0]?.pickupTime)}</p>
+                  <p className="text-gray-700">
+                    {formatDate(reservation[0]?.pickupDate)},{" "}
+                    {formatTime(reservation[0]?.pickupTime)}
+                  </p>
                 </div>
               </div>
 
               {/* Return Section */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Return</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  Return
+                </h3>
 
                 <div className="flex items-start gap-3 mb-3">
                   <MapPin className="w-5 h-5 text-gray-500 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-gray-700 font-medium">{reservation[0]?.returnLocation}</p>
-                    <p className="text-gray-700">Airport Lagos</p>
+                    <p className="text-gray-700 font-medium">
+                      {" "}
+                      {vehicle.returnLocationName}
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <Calendar className="w-5 h-5 text-gray-500 flex-shrink-0" />
-                  <p className="text-gray-700">{formatDate(reservation[0].returnDate)}, {formatTime(reservation[0]?.returnTime)}</p>
+                  <p className="text-gray-700">
+                    {formatDate(reservation[0].returnDate)},{" "}
+                    {formatTime(reservation[0]?.returnTime)}
+                  </p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className='border p-5 border-gray-200 rounded-md'>
+          <div className="border p-5 border-gray-200 rounded-md">
             <div className="mb-4 pb-2 border-b border-gray-200">
               <h3 className="font-bold mb-4">Filter</h3>
             </div>
 
             <Collapse
               bordered={false}
-              defaultActiveKey={['price', 'transmission', 'seats', 'doors', 'luggage', 'brands']}
+              defaultActiveKey={[
+                "price",
+                "transmission",
+                "seats",
+                "doors",
+                "luggage",
+                "brands",
+              ]}
               items={[
                 // Price Filter
                 {
-                  key: 'price',
-                  label: 'Price Range',
-                  className: 'filter-panel',
+                  key: "price",
+                  label: "Price Range",
+                  className: "filter-panel",
                   children: (
                     <>
                       <Slider
@@ -277,10 +300,16 @@ export default function CarRental() {
                         max={1000}
                         value={filters.priceRange}
                         onChange={handlePriceChange}
-                        trackStyle={[{ backgroundColor: '#10B981' }]}
+                        trackStyle={[{ backgroundColor: "#10B981" }]}
                         handleStyle={[
-                          { borderColor: '#10B981', backgroundColor: '#10B981' },
-                          { borderColor: '#10B981', backgroundColor: '#10B981' }
+                          {
+                            borderColor: "#10B981",
+                            backgroundColor: "#10B981",
+                          },
+                          {
+                            borderColor: "#10B981",
+                            backgroundColor: "#10B981",
+                          },
                         ]}
                       />
                       <div className="flex justify-between mt-2">
@@ -288,119 +317,137 @@ export default function CarRental() {
                         <span>${filters.priceRange[1]}</span>
                       </div>
                     </>
-                  )
+                  ),
                 },
                 // Transmission Filter
                 {
-                  key: 'transmission',
-                  label: 'Transmission Type',
-                  className: 'filter-panel',
+                  key: "transmission",
+                  label: "Transmission Type",
+                  className: "filter-panel",
                   children: (
                     <Radio.Group
                       onChange={handleTransmissionChange}
                       value={filters.transmission}
                     >
                       <Radio value="" className="block mb-2">
-                        <div className="flex items-center">
-                          All
-                        </div>
+                        <div className="flex items-center">All</div>
                       </Radio>
                       <Radio value="automatic" className="block mb-2">
-                        <div className="flex items-center">
-                          Automatic
-                        </div>
+                        <div className="flex items-center">Automatic</div>
                       </Radio>
                       <Radio value="manual" className="block">
-                        <div className="flex items-center">
-                          Manual
-                        </div>
+                        <div className="flex items-center">Manual</div>
                       </Radio>
                     </Radio.Group>
-                  )
+                  ),
                 },
                 // Seats Filter
                 {
-                  key: 'seats',
-                  label: 'Seats Required',
-                  className: 'filter-panel',
+                  key: "seats",
+                  label: "Seats Required",
+                  className: "filter-panel",
                   children: (
                     <div className="grid grid-cols-3 gap-3">
                       <div
-                        className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.seats === 0 ? 'border border-green-500 text-green-500' : 'border border-gray-300'}`}
+                        className={`flex justify-center items-center py-2 cursor-pointer text-center ${
+                          filters.seats === 0
+                            ? "border border-green-500 text-green-500"
+                            : "border border-gray-300"
+                        }`}
                         onClick={() => handleSeatsChange(0)}
                       >
                         All
                       </div>
-                      {seatOptions.map(num => (
+                      {seatOptions.map((num) => (
                         <div
                           key={num}
-                          className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.seats === num ? 'border border-green-500 text-green-500' : 'border border-gray-300'}`}
+                          className={`flex justify-center items-center py-2 cursor-pointer text-center ${
+                            filters.seats === num
+                              ? "border border-green-500 text-green-500"
+                              : "border border-gray-300"
+                          }`}
                           onClick={() => handleSeatsChange(num)}
                         >
                           {num}
                         </div>
                       ))}
                     </div>
-                  )
+                  ),
                 },
                 // Doors Filter
                 {
-                  key: 'doors',
-                  label: 'Doors Required',
-                  className: 'filter-panel',
+                  key: "doors",
+                  label: "Doors Required",
+                  className: "filter-panel",
                   children: (
                     <div className="grid grid-cols-3 gap-3">
                       <div
-                        className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.doors === 0 ? 'border border-green-500 text-green-500' : 'border border-gray-300'}`}
+                        className={`flex justify-center items-center py-2 cursor-pointer text-center ${
+                          filters.doors === 0
+                            ? "border border-green-500 text-green-500"
+                            : "border border-gray-300"
+                        }`}
                         onClick={() => handleDoorsChange(0)}
                       >
                         All
                       </div>
-                      {doorOptions.map(num => (
+                      {doorOptions.map((num) => (
                         <div
                           key={num}
-                          className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.doors === num ? 'border border-green-500 text-green-500' : 'border border-gray-300'}`}
+                          className={`flex justify-center items-center py-2 cursor-pointer text-center ${
+                            filters.doors === num
+                              ? "border border-green-500 text-green-500"
+                              : "border border-gray-300"
+                          }`}
                           onClick={() => handleDoorsChange(num)}
                         >
                           {num}
                         </div>
                       ))}
                     </div>
-                  )
+                  ),
                 },
                 // Luggage Filter
                 {
-                  key: 'luggage',
-                  label: 'Luggage Capacity',
-                  className: 'filter-panel',
+                  key: "luggage",
+                  label: "Luggage Capacity",
+                  className: "filter-panel",
                   children: (
                     <div className="grid grid-cols-3 gap-3">
                       <div
-                        className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.luggage === 0 ? 'border border-green-500 text-green-500' : 'border border-gray-300'}`}
+                        className={`flex justify-center items-center py-2 cursor-pointer text-center ${
+                          filters.luggage === 0
+                            ? "border border-green-500 text-green-500"
+                            : "border border-gray-300"
+                        }`}
                         onClick={() => handleLuggageChange(0)}
                       >
                         All
                       </div>
-                      {luggageOptions.map(num => (
+                      {luggageOptions.map((num) => (
                         <div
                           key={num}
-                          className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.luggage === num ? 'border border-green-500 text-green-500' : 'border border-gray-300'}`}
+                          className={`flex justify-center items-center py-2 cursor-pointer text-center ${
+                            filters.luggage === num
+                              ? "border border-green-500 text-green-500"
+                              : "border border-gray-300"
+                          }`}
                           onClick={() => handleLuggageChange(num)}
                         >
                           {num}
                         </div>
                       ))}
                     </div>
-                  )
+                  ),
                 },
                 // Brands Filter
                 {
-                  key: 'brands',
-                  label: 'Brands',
-                  className: 'filter-panel',
+                  key: "brands",
+                  label: "Brands",
+                  className: "filter-panel",
                   children: (
                     <div className="space-y-2">
-                      {brandOptions.map(brand => (
+                      {brandOptions.map((brand) => (
                         <div
                           key={brand}
                           className="flex items-center cursor-pointer gap-2"
@@ -414,8 +461,8 @@ export default function CarRental() {
                         </div>
                       ))}
                     </div>
-                  )
-                }
+                  ),
+                },
               ]}
             />
           </div>
@@ -445,11 +492,14 @@ export default function CarRental() {
                       cover={
                         <img
                           alt={vehicle.name}
-                          src={`${baseURL}${vehicle.image}` || '/images/default-car.jpg'}
+                          src={
+                            `${baseURL}${vehicle.image}` ||
+                            "/images/default-car.jpg"
+                          }
                           className="w-full h-48 object-cover"
                         />
                       }
-                      style={{ padding: '12px' }}
+                      style={{ padding: "12px" }}
                       className="h-full"
                     >
                       <div className="flex justify-between items-center mb-1">
@@ -463,15 +513,20 @@ export default function CarRental() {
                             ({(vehicle.bookings?.length || 0) + 10} Reviews)
                           </span>
                         </div>
-                        <span className={`text-xs px-2 py-1 rounded ${vehicle.status === 'AVAILABLE'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                          }`}>
+                        <span
+                          className={`text-xs px-2 py-1 rounded ${
+                            vehicle.status === "AVAILABLE"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
                           {vehicle.status}
                         </span>
                       </div>
 
-                      <h3 className="font-bold mb-1">{vehicle.brand} {vehicle.model}</h3>
+                      <h3 className="font-bold mb-1">
+                        {vehicle.brand} {vehicle.model}
+                      </h3>
                       <p className="text-xs text-gray-500 mb-1">Starts From</p>
                       <p className="text-green-500 font-bold mb-2">
                         ₦ {vehicle.dailyRate?.toLocaleString()}/Day
@@ -480,18 +535,24 @@ export default function CarRental() {
                       <div className="flex justify-between mb-3">
                         <div className="flex items-center">
                           <UserOutlined className="mr-1 text-gray-500" />
-                          <span className="text-xs">{vehicle.noOfSeats} Seats</span>
+                          <span className="text-xs">
+                            {vehicle.noOfSeats} Seats
+                          </span>
                         </div>
                         <div className="flex items-center">
                           <DatabaseOutlined className="mr-1 text-gray-500" />
-                          <span className="text-xs">{vehicle.noOfLuggages}</span>
+                          <span className="text-xs">
+                            {vehicle.noOfLuggages}
+                          </span>
                         </div>
                       </div>
 
                       <div className="flex justify-between mb-3">
                         <div className="flex items-center">
                           <CarOutlined className="mr-1 text-gray-500" />
-                          <span className="text-xs">{vehicle.noOfDoors} Doors</span>
+                          <span className="text-xs">
+                            {vehicle.noOfDoors} Doors
+                          </span>
                         </div>
                         <div className="flex items-center">
                           <span className="text-xs capitalize">
@@ -507,9 +568,11 @@ export default function CarRental() {
                         }}
                         className="Vehicles"
                         block
-                        disabled={vehicle.status !== 'AVAILABLE'}
+                        disabled={vehicle.status !== "AVAILABLE"}
                       >
-                        {vehicle.status === 'AVAILABLE' ? 'BOOK NOW' : 'NOT AVAILABLE'}
+                        {vehicle.status === "AVAILABLE"
+                          ? "BOOK NOW"
+                          : "NOT AVAILABLE"}
                       </Button>
                     </Card>
                   </div>
@@ -520,22 +583,25 @@ export default function CarRental() {
               {totalPages > 1 && (
                 <div className="flex justify-center mt-4">
                   <ul className="flex">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                      <li
-                        key={page}
-                        className={`mx-1 w-8 h-8 flex items-center justify-center rounded-md ${currentPage === page
-                          ? 'bg-green-500 text-white'
-                          : 'border border-gray-300'
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (page) => (
+                        <li
+                          key={page}
+                          className={`mx-1 w-8 h-8 flex items-center justify-center rounded-md ${
+                            currentPage === page
+                              ? "bg-green-500 text-white"
+                              : "border border-gray-300"
                           }`}
-                      >
-                        <button
-                          className="w-full h-full"
-                          onClick={() => setCurrentPage(page)}
                         >
-                          {page}
-                        </button>
-                      </li>
-                    ))}
+                          <button
+                            className="w-full h-full"
+                            onClick={() => setCurrentPage(page)}
+                          >
+                            {page}
+                          </button>
+                        </li>
+                      )
+                    )}
                     {currentPage < totalPages && (
                       <li className="mx-1 w-8 h-8 flex items-center justify-center border border-gray-300 rounded-md">
                         <button

@@ -1,90 +1,132 @@
 "use client";
-import { ArrowRightOutlined, CarOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
-import { Button, Rate, Spin, Tabs } from 'antd';
+import { ArrowRightOutlined } from '@ant-design/icons';
+import { Spin, Tabs } from 'antd';
 import { useState } from 'react';
 import { useGetAllVehiclesPopularQuery, useGetAllVehiclesRecentsQuery } from '../../features/Home_page/HomeApi';
+import { useGetLocationQuery } from '../../features/LocationApi';
+import CarCard from '../CarCard';
+import ReservationModal from '../ReservationModal';
 
 export default function ExploreVehicles() {
   const [activeTab, setActiveTab] = useState('1');
-  const { data: recentVehicles, isLoading: isRecentVehiclesLoading } = useGetAllVehiclesRecentsQuery();
-  const { data: popularVehicles, isLoading: isPopularVehiclesLoading } = useGetAllVehiclesPopularQuery();
+  const { data: recentVehicles, isLoading: isRecentLoading } = useGetAllVehiclesRecentsQuery();
+  const { data: popularVehicles, isLoading: isPopularLoading } = useGetAllVehiclesPopularQuery();
+  const { data: locationsData, isLoading: locationsLoading } = useGetLocationQuery();
 
-  // Function to transform API data to car card format
-  const transformVehicleData = (vehicle) => ({
-    id: vehicle._id,
-    name: vehicle.name,
-    image: getVehicleImage(vehicle.name), // Helper function to get appropriate image
-    rating: 4.5, // Default rating since API doesn't provide this
-    reviews: 0, // Default reviews count
-    price: vehicle.dailyRate.toFixed(2),
-    seats: vehicle.noOfSeats,
-    gears: '5', // Default value since API doesn't provide
-    doors: vehicle.noOfDoors,
-    transmission: vehicle.transmissionType === 'AUTOMATIC' ? 'Automatic' : 'Manual',
-    luggage: vehicle.noOfLuggages
-  });
 
-  // Helper function to get vehicle image based on name
-  const getVehicleImage = (name) => {
-    const lowerName = name.toLowerCase();
-    if (lowerName.includes('Explorer XLT')) return '/images/maserati.png';
-    if (lowerName.includes('hyundai')) return '/images/Hyundai.png';
-    if (lowerName.includes('mercedes')) return '/images/Mercedes.png';
-    if (lowerName.includes('toyota')) return '/images/Toyota.png';
-    if (lowerName.includes('explorer')) return '/images/explorer.png'; // Add more as needed
-    return '/images/default-car.png'; // Default image
+  // Modal and reservation states
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedCar, setSelectedCar] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleBookNow = (vehicle) => {
+    setSelectedCar(vehicle);
+    setIsModalOpen(true);
+  };
+
+  const handleReservationSubmit = async (reservationData) => {
+    setIsSubmitting(true);
+    try {
+      // Get existing reservations from localStorage
+      const existingReservations = JSON.parse(localStorage.getItem('reservations')) || [];
+
+      // Create new reservation object matching your structure
+      const newReservation = {
+        ...reservationData.vehicle, // Spread all vehicle properties
+        bookings: reservationData.vehicle.bookings || [], // Preserve existing bookings
+        pickupDate: reservationData.pickupDate,
+        pickupTime: reservationData.pickupTime,
+        returnDate: reservationData.returnDate,
+        returnTime: reservationData.returnTime,
+        pickupLocationId: reservationData.pickupLocationId,
+        pickupLocationName: reservationData.pickupLocationName,
+        returnLocationId: reservationData.returnLocationId,
+        returnLocationName: reservationData.returnLocationName,
+        sameLocation: reservationData.sameLocation,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        // Preserve all other vehicle properties
+        dailyRate: reservationData.vehicle.dailyRate,
+        dailyRates: reservationData.vehicle.dailyRates || [],
+        fuelType: reservationData.vehicle.fuelType,
+        image: reservationData.vehicle.image,
+        licenseNumber: reservationData.vehicle.licenseNumber,
+        model: reservationData.vehicle.model,
+        noOfDoors: reservationData.vehicle.noOfDoors,
+        noOfLuggages: reservationData.vehicle.noOfLuggages,
+        noOfSeats: reservationData.vehicle.noOfSeats,
+        shortDescription: reservationData.vehicle.shortDescription,
+        status: "RESERVED", // Update status
+        transmissionType: reservationData.vehicle.transmissionType,
+        vehicleType: reservationData.vehicle.vehicleType,
+        vin: reservationData.vehicle.vin,
+        _id: reservationData.vehicle._id || reservationData.vehicle.id
+      };
+
+      // Add to existing reservations
+      const updatedReservations = [...existingReservations, newReservation];
+
+      // Save to localStorage
+      localStorage.setItem('reservation', JSON.stringify(updatedReservations));
+
+      window.location.href = `/booking-extras`;
+      // Close modal
+      // setIsModalOpen(false);
+
+      // Optional: Show success notification
+      console.log('Reservation saved:', newReservation);
+    } catch (error) {
+      console.error('Error saving reservation:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const renderTabContent = (vehicles, isLoading) => {
+    if (isLoading) {
+      return (
+        <div className='col-span-full flex items-center justify-center w-full h-64'>
+          <Spin size='default' />
+        </div>
+      );
+    }
+    if (!vehicles?.data?.result?.length) {
+      return <p className="text-center py-8">No vehicles available</p>;
+    }
+    return vehicles.data.result.map((vehicle) => (
+      <CarCard
+        key={vehicle._id}
+        car={vehicle}
+        onBookNow={handleBookNow}
+      />
+    ));
   };
 
   const items = [
     {
       key: '1',
-      label: <span className="text-xs sm:text-sm md:text-base">Recent Cars</span>,
+      label: <TabLabel text="Recent Cars" />,
       children: (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-          {isRecentVehiclesLoading ? (
-            <div className='col-span-full flex items-center justify-center w-full h-64 '><Spin size='default' /></div>
-          ) : recentVehicles?.data?.result?.length > 0 ? (
-            recentVehicles?.data?.result.map((vehicle) => (
-              <CarCard key={vehicle._id} car={transformVehicleData(vehicle)} />
-            ))
-          ) : (
-            <p>No recent vehicles available</p>
-          )}
+          {renderTabContent(recentVehicles, isRecentLoading)}
         </div>
       ),
     },
     {
       key: '2',
-      label: <span className="text-xs sm:text-sm md:text-base">Featured Cars</span>,
+      label: <TabLabel text="Featured Cars" />,
       children: (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-          {/* Featured cars could be a combination or different API call */}
-          {isRecentVehiclesLoading ? (
-            <div className='col-span-full flex items-center justify-center w-full h-64 '><Spin size='default' /></div>
-          ) : recentVehicles?.length > 0 ? (
-            recentVehicles?.data?.result.slice(0, 4).map((vehicle) => (
-              <CarCard key={vehicle._id} car={transformVehicleData(vehicle)} />
-            ))
-          ) : (
-            <p>No featured vehicles available</p>
-          )}
+          {renderTabContent(recentVehicles, isRecentLoading)}
         </div>
       ),
     },
     {
       key: '3',
-      label: <span className="text-xs sm:text-sm md:text-base">Popular Cars</span>,
+      label: <TabLabel text="Popular Cars" />,
       children: (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-          {isPopularVehiclesLoading ? (
-            <div className='col-span-full flex items-center justify-center w-full h-64 '><Spin size='default' /></div>
-          ) : popularVehicles?.data?.result?.length > 0 ? (
-            popularVehicles?.data?.result.map((vehicle) => (
-              <CarCard key={vehicle._id} car={transformVehicleData(vehicle)} />
-            ))
-          ) : (
-            <p>No popular vehicles available</p>
-          )}
+          {renderTabContent(popularVehicles, isPopularLoading)}
         </div>
       ),
     },
@@ -94,9 +136,7 @@ export default function ExploreVehicles() {
     <div className="container mx-auto sm:px-0 px-3 py-6 md:py-16">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Explore Vehicles</h1>
-        <a href="/fleet" className="text-green-500 flex items-center hover:underline text-sm sm:text-base">
-          View All <ArrowRightOutlined className="ml-1" />
-        </a>
+        <ViewAllLink />
       </div>
 
       <Tabs
@@ -106,64 +146,28 @@ export default function ExploreVehicles() {
         className="car-tabs"
         tabBarStyle={{ fontSize: 'inherit' }}
       />
+
+      <ReservationModal
+        open={isModalOpen}
+        onCancel={() => setIsModalOpen(false)}
+        selectedCar={selectedCar}
+        onSubmit={handleReservationSubmit}
+        isloading={isSubmitting}
+
+        locationsData={locationsData}
+        locationsLoading={locationsLoading}
+      // Add locationsData and locationsLoading props if you have them
+      />
     </div>
   );
 }
 
-function CarCard({ car }) {
-  return (
-    <div className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300">
-      <div className="aspect-w-16 aspect-h-9 sm:aspect-w-3 sm:aspect-h-2">
-        <img
-          src={car.image}
-          alt={car.name}
-          className="w-full h-full object-cover"
-          loading="lazy"
-        />
-      </div>
+const TabLabel = ({ text }) => (
+  <span className="text-xs sm:text-sm md:text-base">{text}</span>
+);
 
-      <div className="p-3 sm:p-4">
-        <div className="flex items-center mb-2">
-          <Rate
-            disabled
-            defaultValue={car.rating || 4}
-            className="text-xs sm:text-sm"
-            style={{ fontSize: '0.8rem' }}
-          />
-          <span className="text-gray-500 text-xs sm:text-sm ml-2">({car.reviews})</span>
-        </div>
-
-        <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-1 line-clamp-1">{car.name}</h3>
-
-        <div className="mb-3 sm:mb-4">
-          <p className="text-xs sm:text-sm text-gray-500">Starts From</p>
-          <p className="text-green-500 font-bold text-sm sm:text-base">₦ {car.price}/Day</p>
-        </div>
-
-        <div className="border-t border-gray-200 pt-3 sm:pt-4 mb-3 sm:mb-4">
-          <div className="grid grid-cols-2 gap-2 text-xs sm:text-sm">
-            <div className="flex items-center text-gray-600">
-              <UserOutlined className="mr-1 sm:mr-2" />
-              <span>{car.seats} Seats</span>
-            </div>
-            <div className="flex items-center text-gray-600">
-              <CarOutlined className="mr-1 sm:mr-2" />
-              <span>{car.gears} Gears</span>
-            </div>
-            <div className="flex items-center text-gray-600">
-              <span>{car.doors} Doors</span>
-            </div>
-            <div className="flex items-center text-gray-600">
-              <SettingOutlined className="mr-1 sm:mr-2" />
-              <span>{car.transmission}</span>
-            </div>
-          </div>
-        </div>
-
-        <Button className="w-full Vehicles">
-          BOOK NOW
-        </Button>
-      </div>
-    </div>
-  );
-}
+const ViewAllLink = () => (
+  <a href="/fleet" className="text-green-500 flex items-center hover:underline text-sm sm:text-base">
+    View All <ArrowRightOutlined className="ml-1" />
+  </a>
+);
