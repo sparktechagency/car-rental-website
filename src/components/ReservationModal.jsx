@@ -409,7 +409,8 @@ const ReservationModal = ({
       footer={null}
       width={500}
       centered
-      destroyOnClose
+      // destroyOnClose
+      destroyOnHidden
     >
       <div className="w-full flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-sm px-4 sm:px-6 py-6 sm:py-8 w-full max-w-md">
@@ -423,8 +424,8 @@ const ReservationModal = ({
                   <img
                     src={
                       selectedCar.image
-                        && `${selectedCar.image}`
-                  
+                      && `${selectedCar.image}`
+
                     }
                     alt={`${selectedCar.brand} ${selectedCar.model}`}
                     className="w-16 h-16 object-cover rounded mr-3"

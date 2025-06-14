@@ -4,11 +4,18 @@ import { PrinterOutlined } from '@ant-design/icons';
 import { Button, Card } from 'antd';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
-import { useManageBookingQuery } from '../../features/Booking/BookingApi';
+import { useGetBookingEmailAndIdQuery } from '../../features/Booking/BookingApi';
 
 const ReservationDetails = () => {
   const bookingId = useSearchParams().get("bookingId");
-  const { data, isLoading } = useManageBookingQuery(bookingId, { skip: !bookingId });
+  const email = useSearchParams().get("email");
+
+  const { data, isLoading, error } = useGetBookingEmailAndIdQuery(
+    { referenceId: bookingId, email },
+    {
+      skip: !bookingId || !email
+    }
+  );
   const bookingData = data?.data;
 
   const [activeSection, setActiveSection] = useState('details');
@@ -172,11 +179,11 @@ const ReservationDetails = () => {
             </div>
             <div class="info-item">
               <div class="info-label">Pick-up Location</div>
-              <div class="info-value">${bookingData.pickupLocation || 'N/A'}</div>
+              <div class="info-value">${typeof bookingData.pickupLocation === 'object' ? (bookingData.pickupLocation?.location || 'N/A') : (bookingData.pickupLocation || 'N/A')}</div>
             </div>
             <div class="info-item">
               <div class="info-label">Return Location</div>
-              <div class="info-value">${bookingData.returnLocation || 'N/A'}</div>
+              <div class="info-value">${typeof bookingData.returnLocation === 'object' ? (bookingData.returnLocation?.location || 'N/A') : (bookingData.returnLocation || 'N/A')}</div>
             </div>
           </div>
         </div>
@@ -229,9 +236,9 @@ const ReservationDetails = () => {
           <div class="section-title">Extras & Protection</div>
           ${bookingData.extraServices?.length > 0 ?
         bookingData.extraServices.map((service, index) => `
-              <div class="extras-item">
+              <div key="${index}" class="extras-item">
                 <div>
-                  <strong>${service.serviceId}</strong><br>
+                  <strong>${service.serviceId._id}</strong><br>
                   <span style="color: #666; font-size: 14px;">Quantity: ${service.quantity}</span>
                 </div>
                 <span style="color: #22c55e; font-weight: bold;">Included</span>
@@ -250,9 +257,9 @@ const ReservationDetails = () => {
               <span>$${((bookingData.vehicle?.dailyRate || 0) * (bookingData.carRentedForInDays || 0)).toFixed(2)}</span>
             </div>
             ${bookingData.extraServices?.map((service, index) => `
-              <div class="price-item">
-                <span>Extra Service ${index + 1}</span>
-                <span>$0.00</span>
+              <div key="${index}" class="price-item">              
+                  <span>${service.serviceId.name} x ${service.quantity}</span>
+                  <span className="font-medium">${service.serviceId.cost}</span>
               </div>
             `).join('') || ''}
             <div class="price-item">
@@ -371,11 +378,11 @@ const ReservationDetails = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <p className="text-gray-500 text-sm">Reference ID</p>
-              <p className="font-medium">{bookingData?._id}</p>
+              <p className="font-medium">{bookingData?._id || 'N/A'}</p>
             </div>
             <div>
               <p className="text-gray-500 text-sm">Created on</p>
-              <p className="font-medium">{bookingData?.createdAt && formatDate(bookingData.createdAt)}</p>
+              <p className="font-medium">{bookingData?.createdAt ? formatDate(bookingData.createdAt) : 'N/A'}</p>
             </div>
           </div>
 
@@ -388,7 +395,7 @@ const ReservationDetails = () => {
             </div>
             <div>
               <p className="text-gray-500 text-sm">Type</p>
-              <p className="font-medium">{bookingData?.vehicle?.vehicleType}</p>
+              <p className="font-medium">{bookingData?.vehicle?.vehicleType || 'N/A'}</p>
             </div>
           </div>
 
@@ -396,15 +403,15 @@ const ReservationDetails = () => {
             <div>
               <p className="text-gray-500 text-sm">Pickup Date & Time</p>
               <p className="font-medium">
-                {bookingData?.pickupDate && formatDate(bookingData.pickupDate)},
-                {bookingData?.pickupTime && formatTime(bookingData.pickupTime)}
+                {bookingData?.pickupDate ? formatDate(bookingData.pickupDate) : 'N/A'}
+                {bookingData?.pickupTime ? `, ${formatTime(bookingData.pickupTime)}` : ''}
               </p>
             </div>
             <div>
               <p className="text-gray-500 text-sm">Return Date & Time</p>
               <p className="font-medium">
-                {bookingData?.returnDate && formatDate(bookingData.returnDate)},
-                {bookingData?.returnTime && formatTime(bookingData.returnTime)}
+                {bookingData?.returnDate ? formatDate(bookingData.returnDate) : 'N/A'}
+                {bookingData?.returnTime ? `, ${formatTime(bookingData.returnTime)}` : ''}
               </p>
             </div>
           </div>
@@ -412,11 +419,21 @@ const ReservationDetails = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <div>
               <p className="text-gray-500 text-sm">Pick-up Location</p>
-              <p className="font-medium">{bookingData?.pickupLocation}</p>
+              <p className="font-medium">
+                {typeof bookingData?.pickupLocation === 'object'
+                  ? (bookingData.pickupLocation?.location || 'N/A')
+                  : (bookingData?.pickupLocation || 'N/A')
+                }
+              </p>
             </div>
             <div>
               <p className="text-gray-500 text-sm">Return Location</p>
-              <p className="font-medium">{bookingData?.returnLocation}</p>
+              <p className="font-medium">
+                {typeof bookingData?.returnLocation === 'object'
+                  ? (bookingData.returnLocation?.location || 'N/A')
+                  : (bookingData?.returnLocation || 'N/A')
+                }
+              </p>
             </div>
           </div>
         </div>
@@ -429,51 +446,51 @@ const ReservationDetails = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-gray-500 text-sm">First Name</p>
-                <p className="font-medium">{bookingData?.clientId?.firstName}</p>
+                <p className="font-medium">{bookingData?.clientId?.firstName || 'N/A'}</p>
               </div>
               <div>
                 <p className="text-gray-500 text-sm">Last Name</p>
-                <p className="font-medium">{bookingData?.clientId?.lastName}</p>
+                <p className="font-medium">{bookingData?.clientId?.lastName || 'N/A'}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               <div>
                 <p className="text-gray-500 text-sm">E-Mail</p>
-                <p className="font-medium">{bookingData?.clientId?.email}</p>
+                <p className="font-medium">{bookingData?.clientId?.email || 'N/A'}</p>
               </div>
               <div>
                 <p className="text-gray-500 text-sm">Phone</p>
-                <p className="font-medium">{bookingData?.clientId?.phone}</p>
+                <p className="font-medium">{bookingData?.clientId?.phone || 'N/A'}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               <div>
                 <p className="text-gray-500 text-sm">Country</p>
-                <p className="font-medium">{bookingData?.clientId?.country}</p>
+                <p className="font-medium">{bookingData?.clientId?.country || 'N/A'}</p>
               </div>
               <div>
                 <p className="text-gray-500 text-sm">Region/State</p>
-                <p className="font-medium">{bookingData?.clientId?.state}</p>
+                <p className="font-medium">{bookingData?.clientId?.state || 'N/A'}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               <div>
                 <p className="text-gray-500 text-sm">City</p>
-                <p className="font-medium">{bookingData?.clientId?.presentAddress?.split(', ')[1]}</p>
+                <p className="font-medium">{bookingData?.clientId?.presentAddress?.split(', ')[1] || 'N/A'}</p>
               </div>
               <div>
                 <p className="text-gray-500 text-sm">Address</p>
-                <p className="font-medium">{bookingData?.clientId?.presentAddress}</p>
+                <p className="font-medium">{bookingData?.clientId?.presentAddress || 'N/A'}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               <div>
                 <p className="text-gray-500 text-sm">Postcode/ZIP</p>
-                <p className="font-medium">{bookingData?.clientId?.postCode}</p>
+                <p className="font-medium">{bookingData?.clientId?.postCode || 'N/A'}</p>
               </div>
             </div>
           </div>
@@ -492,8 +509,8 @@ const ReservationDetails = () => {
               {bookingData.extraServices.map((service, index) => (
                 <div key={index} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
                   <div>
-                    <h3 className="font-medium">{service.serviceId}</h3>
-                    <p className="text-sm text-gray-500">Quantity: {service.quantity}</p>
+                    <h3 className="font-medium">{service.serviceId._id || 'N/A'}</h3>
+                    <p className="text-sm text-gray-500">Quantity: {service.quantity || 0}</p>
                   </div>
                   <span className="font-medium text-green-600">Included</span>
                 </div>
@@ -507,64 +524,71 @@ const ReservationDetails = () => {
     </div>
   );
 
-  const renderPaymentsSection = () => (
-    <div className="w-full">
-      <Card className="mb-6">
-        <h2 className="text-lg font-medium mb-4">Price Breakdown</h2>
-        <div className="border-t border-gray-200 pt-4">
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span>Base Rental ({bookingData?.carRentedForInDays} days)</span>
-              <span className="font-medium">${(bookingData?.vehicle?.dailyRate * bookingData?.carRentedForInDays).toFixed(2)}</span>
-            </div>
-            {bookingData?.extraServices?.map((service, index) => (
-              <div key={index} className="flex justify-between">
-                <span>Extra Service {index + 1}</span>
-                <span className="font-medium">$0.00</span>
+  const renderPaymentsSection = () => {
+    const baseRental = (bookingData?.vehicle?.dailyRate || 0) * (bookingData?.carRentedForInDays || 0);
+    const totalAmount = bookingData?.amount || 0;
+    const taxesAndFees = totalAmount - baseRental;
+
+    return (
+      <div className="w-full">
+        <Card className="mb-6">
+          <h2 className="text-lg font-medium mb-4">Price Breakdown</h2>
+          <div className="border-t border-gray-200 pt-4">
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span>Base Rental ({bookingData?.carRentedForInDays || 0} days)</span>
+                <span className="font-medium">${baseRental.toFixed(2)}</span>
               </div>
-            ))}
-            <div className="flex justify-between">
-              <span>Taxes & Fees</span>
-              <span className="font-medium">${(bookingData?.amount - (bookingData?.vehicle?.dailyRate * bookingData?.carRentedForInDays)).toFixed(2)}</span>
-            </div>
-            <div className="border-t border-gray-200 pt-3 flex justify-between text-lg font-bold">
-              <span>Total Amount</span>
-              <span className="text-green-600">${bookingData?.amount?.toFixed(2)}</span>
+              {bookingData?.extraServices?.map((service, index) => {
+                console.log({ service })
+                return <div key={index} className="flex justify-between">
+                  <span>{service.serviceId.name || `Extra Service ${index + 1}`}</span>
+                  <span className="font-medium">{service.serviceId.cost || "$0.00"}</span>
+                </div>
+              })}
+              <div className="flex justify-between">
+                <span>Taxes & Fees</span>
+                <span className="font-medium">${taxesAndFees.toFixed(2)}</span>
+              </div>
+              <div className="border-t border-gray-200 pt-3 flex justify-between text-lg font-bold">
+                <span>Total Amount</span>
+                <span className="text-green-600">${totalAmount.toFixed(2)}</span>
+              </div>
             </div>
           </div>
-        </div>
-      </Card>
+        </Card>
 
-      <Card>
-        <h2 className="text-lg font-medium mb-4">Payment Information</h2>
-        <div className="border-t border-gray-200 pt-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-gray-500 text-sm">Payment Method</p>
-              <p className="font-medium">{bookingData?.paymentMethod}</p>
+        <Card>
+          <h2 className="text-lg font-medium mb-4">Payment Information</h2>
+          <div className="border-t border-gray-200 pt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-gray-500 text-sm">Payment Method</p>
+                <p className="font-medium">{bookingData?.paymentMethod || 'N/A'}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-sm">Payment Status</p>
+                <span className={`${bookingData?.paymentId?.status === 'PAID' ? 'bg-green-500' : 'bg-yellow-500'} text-white px-3 py-1 rounded-md text-sm`}>
+                  {bookingData?.paymentId?.status || 'N/A'}
+                </span>
+              </div>
             </div>
-            <div>
-              <p className="text-gray-500 text-sm">Payment Status</p>
-              <span className={`${bookingData?.paymentId?.status === 'PAID' ? 'bg-green-500' : 'bg-yellow-500'} text-white px-3 py-1 rounded-md text-sm`}>
-                {bookingData?.paymentId?.status}
-              </span>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <div>
-              <p className="text-gray-500 text-sm">Transaction ID</p>
-              <p className="font-medium">{bookingData?.paymentId?._id}</p>
-            </div>
-            <div>
-              <p className="text-gray-500 text-sm">Payment Date</p>
-              <p className="font-medium">{bookingData?.paymentId?.createdAt && formatDate(bookingData.paymentId.createdAt)}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div>
+                <p className="text-gray-500 text-sm">Transaction ID</p>
+                <p className="font-medium">{bookingData?.paymentId?._id || 'N/A'}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-sm">Payment Date</p>
+                <p className="font-medium">{bookingData?.paymentId?.createdAt ? formatDate(bookingData.paymentId.createdAt) : 'N/A'}</p>
+              </div>
             </div>
           </div>
-        </div>
-      </Card>
-    </div>
-  );
+        </Card>
+      </div>
+    );
+  };
 
   const renderContent = () => {
     if (isLoading) {

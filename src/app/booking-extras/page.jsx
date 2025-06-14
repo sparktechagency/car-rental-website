@@ -173,8 +173,8 @@ const AddonCard = React.memo(
                 add ? `Remove ${title} from booking` : `Add ${title} to booking`
               }
               className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors duration-200 border ${add
-                  ? "border-green-500 bg-green-50 text-green-700"
-                  : "border-gray-200 hover:bg-gray-50"
+                ? "border-green-500 bg-green-50 text-green-700"
+                : "border-gray-200 hover:bg-gray-50"
                 }`}
             >
               {add ? (
@@ -216,7 +216,7 @@ export default function BookingExtras() {
   const [pickupLocation, setPickupLocation] = useState(null);
   const [returnLocation, setReturnLocation] = useState(null);
   const [locationsLoading, setLocationsLoading] = useState(false);
-  const data = localStorage.getItem("reservation");
+  // const data = localStorage.getItem("reservation");
   const [addedServices, setAddedServices] = useState({
     count: 0,
     cost: 0,

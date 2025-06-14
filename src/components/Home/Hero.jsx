@@ -218,7 +218,7 @@ const Hero = () => {
     setTimeout(() => {
       localStorage.setItem("reservation", JSON.stringify([reservationData]));
       setIsLoading(false);
-      window.location.href = "/reservation";
+      window.location.href = "/Reservation";
     }, 2000);
   };
 

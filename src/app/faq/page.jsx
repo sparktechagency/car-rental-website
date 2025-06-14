@@ -1,7 +1,8 @@
+
 "use client"
-import React, { useState, useEffect } from 'react';
-import { Collapse, Divider, Spin } from 'antd';
 import { CaretRightOutlined } from '@ant-design/icons';
+import { Collapse, Spin } from 'antd';
+import { useEffect, useState } from 'react';
 
 const FAQ = () => {
   const [faqs, setFaqs] = useState([]);
@@ -23,7 +24,7 @@ const FAQ = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundImage: 'url("https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?q=80&w=1983&auto=format&fit=crop")', // Luxury car image
+      backgroundImage: 'url("https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?q=80&w=1983&auto=format&fit=crop")',
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
@@ -69,26 +70,6 @@ const FAQ = () => {
     },
   };
 
-  // Custom styles for Collapse
-  const collapseStyles = {
-    '.ant-collapse-item-active': {
-      backgroundColor: '#04bf61 !important',
-      borderRadius: '8px',
-      '.ant-collapse-header': {
-        color: 'white !important',
-      },
-      '.ant-collapse-content': {
-        backgroundColor: 'white',
-      },
-    },
-    '.ant-collapse-item': {
-      marginBottom: '0 !important',
-      backgroundColor: 'white',
-      borderRadius: '8px !important',
-      border: '1px solid #f0f0f0',
-    },
-  };
-
   useEffect(() => {
     const fetchFAQs = async () => {
       try {
@@ -105,6 +86,9 @@ const FAQ = () => {
         }));
 
         setFaqs(formattedFaqs);
+        if (formattedFaqs.length > 0) {
+          setActiveKey(formattedFaqs[0].key); // Set the first FAQ's key as active
+        }
       } catch (error) {
         console.error('Error fetching FAQs:', error);
         setError(error.message);
@@ -146,7 +130,6 @@ const FAQ = () => {
 
       {/* FAQ Content */}
       <div style={styles.mainContent}>
-
         {loading ? (
           <div style={styles.loadingContainer}>
             <Spin size="large" />
@@ -154,11 +137,13 @@ const FAQ = () => {
         ) : (
           <div style={styles.gridContainer}>
             {splitFaqs.map((columnFaqs, columnIndex) => (
-              <div key={columnIndex} >
+              <div key={columnIndex}>
                 <Collapse
+                  activeKey={activeKey}
                   items={columnFaqs}
                   size="large"
                   accordion
+                  onChange={(key) => setActiveKey(key)}
                   expandIcon={({ isActive }) => (
                     <CaretRightOutlined
                       rotate={isActive ? 90 : 0}
@@ -207,6 +192,3 @@ const FAQ = () => {
 };
 
 export default FAQ;
-
-
-

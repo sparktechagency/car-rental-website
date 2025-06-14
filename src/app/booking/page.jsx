@@ -15,8 +15,6 @@ export default function ReservationPage() {
   const [data, setData] = useState({});
   const { data: bookingData, isLoading, error } = useGetBookingEmailAndIdQuery(data, { skip: !data.email || !data.referenceId });
 
-  console.log(bookingData);
-
   // Handle API response
   useEffect(() => {
     if (bookingData) {
@@ -26,7 +24,7 @@ export default function ReservationPage() {
         setLoading(false);
       } else if (bookingData.success === true) {
         // Handle successful response
-        router.push(`/reservationdetails?bookingId=${data.referenceId}`)
+        router.push(`/reservationdetails?bookingId=${data.referenceId}&email=${data.email}`);
         message.success('Booking details retrieved successfully');
         setLoading(false);
         // You can redirect or show booking details here

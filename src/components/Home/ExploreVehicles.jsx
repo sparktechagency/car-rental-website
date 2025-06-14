@@ -112,15 +112,15 @@ export default function ExploreVehicles() {
         </div>
       ),
     },
-    {
-      key: '2',
-      label: <TabLabel text="Featured Cars" />,
-      children: (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-          {renderTabContent(recentVehicles, isRecentLoading)}
-        </div>
-      ),
-    },
+    // {
+    //   key: '2',
+    //   label: <TabLabel text="Featured Cars" />,
+    //   children: (
+    //     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+    //       {renderTabContent(recentVehicles, isRecentLoading)}
+    //     </div>
+    //   ),
+    // },
     {
       key: '3',
       label: <TabLabel text="Popular Cars" />,

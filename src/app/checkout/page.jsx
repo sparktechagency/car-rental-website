@@ -113,11 +113,11 @@ export default function Checkout() {
       // Prepare extra services
       const extraServices = item.addedServices
         ? Object.entries(item.addedServices)
-            .filter(([_, service]) => service?.added)
-            .map(([serviceId, service]) => ({
-              serviceId,
-              quantity: service.quantity || 1,
-            }))
+          .filter(([_, service]) => service?.added)
+          .map(([serviceId, service]) => ({
+            serviceId,
+            quantity: service.quantity || 1,
+          }))
         : [];
 
       // Build payload
@@ -146,6 +146,8 @@ export default function Checkout() {
 
       const response = await createBooking(bookingPayload).unwrap();
       localStorage.setItem("bookingId", item._id);
+      console.log({ response })
+      console.log({ response: response?.data?.url })
       router.push(`${response?.data?.url}`);
     } catch (error) {
       console.error("Booking error:", error);
@@ -422,7 +424,8 @@ export default function Checkout() {
                 </ol>
                 <Form.Item name="paymentMethod" rules={[{ required: true }]}>
                   <Select placeholder="Select Payment Method">
-                    <Option value="stripe">STRIPE</Option>
+                    <Option value="STRIPE">STRIPE</Option>
+                    <Option value="BANK">BANK</Option>
                   </Select>
                 </Form.Item>
               </div>
@@ -446,8 +449,8 @@ export default function Checkout() {
                         value
                           ? Promise.resolve()
                           : Promise.reject(
-                              "You must agree to the rental terms"
-                            ),
+                            "You must agree to the rental terms"
+                          ),
                     },
                   ]}
                 >
