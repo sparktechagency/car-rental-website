@@ -1,14 +1,15 @@
 "use client";
-import React from 'react';
-import { Layout, Typography, Space, Row, Col } from 'antd';
-import { PhoneOutlined, MessageOutlined, MailOutlined } from '@ant-design/icons';
+import { MailOutlined, MessageOutlined, PhoneOutlined } from '@ant-design/icons';
+import { Col, Layout, Row, Space, Typography } from 'antd';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useGetFAQQuery } from '../features/Home_page/HomeApi';
 
 const { Footer } = Layout;
 const { Title, Text } = Typography;
 
 const AppFooter = () => {
+  const { data: faq, isLoading, isError } = useGetFAQQuery();
   return (
     <Footer style={{ backgroundColor: "#101A12", color: "#ffffff" }} className="p-0 bg-[#101A12] text-white">
       <div className="max-w-7xl mx-auto py-16 px-4 ">
@@ -45,6 +46,7 @@ const AppFooter = () => {
             <Space direction="vertical" size="middle">
               {/* <Link style={{color:'white'}} href="/partner" className="text-white hover:text-gray-300">Become a partner</Link> */}
               <Link style={{ color: 'white' }} href="/terms-conditions" className="text-white hover:text-gray-300">Term & Condition</Link>
+              <Link style={{ color: 'white' }} href="/privacy-policy" className="text-white hover:text-gray-300">Privacy Policy </Link>
               <Link style={{ color: 'white' }} href="/faq" className="text-white hover:text-gray-300">Faq</Link>
               <Link style={{ color: 'white' }} href="/fleet" className="text-white hover:text-gray-300">Fleet</Link>
             </Space>
@@ -55,15 +57,15 @@ const AppFooter = () => {
             <Space direction="vertical" size="middle">
               <Space>
                 <PhoneOutlined style={{ color: 'white' }} />
-                <Text style={{ color: 'white' }} className="text-white">+234 912 230 8240</Text>
+                <Text style={{ color: 'white' }} className="text-white">{isLoading ? 'Loading...' : faq?.data?.contact?.phone}</Text>
               </Space>
               <Space>
                 <MessageOutlined style={{ color: 'white' }} />
-                <Text style={{ color: 'white' }} className="text-white">+234 810 348 4586</Text>
+                <Text style={{ color: 'white' }} className="text-white">{isLoading ? 'Loading...' : faq?.data?.contact?.phone}</Text>
               </Space>
               <Space>
                 <MailOutlined style={{ color: 'white' }} />
-                <Text style={{ color: 'white' }} className="text-white">example@carrental.com</Text>
+                <Text style={{ color: 'white' }} className="text-white">{isLoading ? 'Loading...' : faq?.data?.contact?.email}</Text>
               </Space>
             </Space>
           </Col>

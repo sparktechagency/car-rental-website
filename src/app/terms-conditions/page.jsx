@@ -12,7 +12,10 @@ const termsConditionsPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <CustomBanner backgroundImage='/images/banner.jpg' routeName={"Privacy Policy"} />
+      <CustomBanner backgroundImage='/images/banner.jpg' title={"Terms & Conditions"} routeName={"Terms & Conditions"} breadcrumbs={[
+        { label: "Home", href: "/" },
+        { label: "Terms & Conditions", href: "/terms-conditions" }
+      ]} />
       <div className="container mx-auto flex-1 w-full px-4 py-8">
         <div className=" ">
           <Spin

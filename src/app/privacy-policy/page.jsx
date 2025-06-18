@@ -12,7 +12,10 @@ const PrivacyPolicyPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <CustomBanner routeName={"Privacy Policy"} />
+      <CustomBanner backgroundImage='/images/banner.jpg' title={"Privacy Policy"} routeName={"Privacy Policy"} breadcrumbs={[
+        { label: "Home", href: "/" },
+        { label: "Privacy Policy", href: "/privacy-policy" }
+      ]} />
       <div className="container mx-auto flex-1 w-full px-4 py-8">
         <div className=" ">
           <Spin
