@@ -1,6 +1,7 @@
 "use client";
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Spin, Tabs } from 'antd';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useGetAllVehiclesPopularQuery, useGetAllVehiclesRecentsQuery } from '../../features/Home_page/HomeApi';
 import { useGetLocationQuery } from '../../features/LocationApi';
@@ -12,6 +13,8 @@ export default function ExploreVehicles() {
   const { data: recentVehicles, isLoading: isRecentLoading } = useGetAllVehiclesRecentsQuery();
   const { data: popularVehicles, isLoading: isPopularLoading } = useGetAllVehiclesPopularQuery();
   const { data: locationsData, isLoading: locationsLoading } = useGetLocationQuery();
+  const router = useRouter();
+  const [isloading, setIsloading] = useState(false);
 
 
   // Modal and reservation states
@@ -26,6 +29,7 @@ export default function ExploreVehicles() {
 
   const handleReservationSubmit = async (reservationData) => {
     setIsSubmitting(true);
+    setIsloading(true);
     try {
       // Get existing reservations from localStorage
       const existingReservations = JSON.parse(localStorage.getItem('reservations')) || [];
@@ -69,12 +73,12 @@ export default function ExploreVehicles() {
       // Save to localStorage
       localStorage.setItem('reservation', JSON.stringify(updatedReservations));
 
-      window.location.href = `/booking-extras`;
+      setTimeout(() => {
+        setIsloading(false);
+        router.push('/booking-extras');
+      }, 1000);
       // Close modal
       // setIsModalOpen(false);
-
-      // Optional: Show success notification
-      console.log('Reservation saved:', newReservation);
     } catch (error) {
       console.error('Error saving reservation:', error);
     } finally {
@@ -152,7 +156,7 @@ export default function ExploreVehicles() {
         onCancel={() => setIsModalOpen(false)}
         selectedCar={selectedCar}
         onSubmit={handleReservationSubmit}
-        isloading={isSubmitting}
+        isloading={isloading}
 
         locationsData={locationsData}
         locationsLoading={locationsLoading}

@@ -38,10 +38,11 @@ const Header = () => {
 
         {/* Social Icons - better mobile alignment */}
         <div className="w-full md:w-auto flex justify-center md:justify-end mt-1 md:mt-0 space-x-3 md:space-x-1">
-          <Link
-            href="https://facebook.com"
+          <Link 
+            href="https://www.facebook.com/theluxauto"
             className="text-white hover:text-amber-400 flex items-center"
             aria-label="Facebook"
+            target='_blank'
           >
             <div className="p-1 rounded-full">
               <FaceBookLogo className="w-3.5 h-3.5 md:w-5 md:h-5" />
@@ -49,9 +50,10 @@ const Header = () => {
           </Link>
 
           <Link
-            href="https://instagram.com"
+            href="https://www.instagram.com/theluxauto1/"
             className="text-white hover:text-amber-400 flex items-center"
             aria-label="Instagram"
+            target='_blank'
           >
             <div className="p-1 rounded-full">
               <InstraGramLogo className="w-3.5 h-3.5 md:w-5 md:h-5" />

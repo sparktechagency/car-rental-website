@@ -4,6 +4,7 @@ import ReservationModal from "@/components/ReservationModal";
 import { SearchOutlined, StarFilled } from "@ant-design/icons";
 import { Input, Pagination } from "antd";
 import debounce from "lodash.debounce";
+import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from "react";
 import { baseURL } from "../../../utils/BaseURL";
 import { useGetAllVehiclesQuery } from "../../features/fleet_page/FleetApi";
@@ -18,6 +19,7 @@ export default function Fleet() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isloading, setIsloading] = useState(false);
   const searchInputRef = useRef(null);
+  const router = useRouter();
 
   // API queries
   const {
@@ -105,9 +107,12 @@ export default function Fleet() {
 
     localStorage.setItem("reservation", JSON.stringify(updatedReservations));
 
-    setIsloading(false);
-    setIsModalOpen(false);
-    window.location.href = "/booking-extras";
+
+    // setIsModalOpen(false);
+    setTimeout(() => {
+      setIsloading(false);
+      router.push("/booking-extras");
+    }, 1000);
   };
 
   if (vehiclesLoading) {
@@ -262,8 +267,8 @@ export default function Fleet() {
                 <button
                   onClick={() => showModal(car)}
                   className={`bg-yellow-500 hover:bg-yellow-600 text-gray-900 cursor-pointer font-bold py-3 px-6 rounded ${car.status !== "AVAILABLE"
-                      ? "opacity-50 cursor-not-allowed"
-                      : ""
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
                     }`}
                   disabled={car.status !== "AVAILABLE"}
                 >

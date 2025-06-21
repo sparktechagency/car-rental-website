@@ -2,8 +2,7 @@
 import {
   CalendarOutlined,
   ClockCircleOutlined,
-  PlusOutlined,
-  StarFilled,
+  PlusOutlined
 } from "@ant-design/icons";
 import {
   Button,
@@ -17,6 +16,7 @@ import {
 } from "antd";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
+import { baseURL } from '../../utils/BaseURL';
 
 const ReservationModal = ({
   open,
@@ -254,7 +254,7 @@ const ReservationModal = ({
     }
 
     if (pickupDate && pickupTime && isPickupInPast(pickupDate, pickupTime)) {
-      newErrors.pickupTime = "Pickup date and time cannot be in the past";
+      newErrors.pickupTime = "Pickup must be 1+ minutes ahead";
       valid = false;
     }
 
@@ -423,8 +423,8 @@ const ReservationModal = ({
                 <div className="flex items-center">
                   <img
                     src={
-                      selectedCar.image
-                      && `${selectedCar.image}`
+                      `${baseURL}${selectedCar.image}`
+                      && `${baseURL}${selectedCar.image}`
 
                     }
                     alt={`${selectedCar.brand} ${selectedCar.model}`}

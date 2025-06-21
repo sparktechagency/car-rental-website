@@ -14,18 +14,19 @@ import {
   Empty,
   Radio,
   Rate,
-  Slider
+  Slider,
+  Spin
 } from 'antd';
 import { Calendar, MapPin } from "lucide-react";
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { baseURL } from '../../../utils/BaseURL';
-import CustomLoading from '../../components/CustomLoading';
 import { useGetAllVehiclesQuery, useSeatDoorLuggageBrandsQuery } from '../../features/reservation_page/reservationApi';
 
 const { Panel } = Collapse;
 
 export default function CarRental() {
+  const [reservation, setReservation] = useState([]);
   const [filters, setFilters] = useState({
     transmission: '',
     seats: 0,
@@ -36,9 +37,6 @@ export default function CarRental() {
     brands: []
   });
 
-  const reservation = JSON.parse(localStorage.getItem("reservation"));
-  console.log(reservation);
-
   const [currentPage, setCurrentPage] = useState(1);
   const { data, isLoading, error, refetch } = useGetAllVehiclesQuery({
     searchTerm: filters.searchTerm,
@@ -46,8 +44,17 @@ export default function CarRental() {
   });
 
   const { data: seatDoorLuggageBrands, isLoading: seatDoorLuggageBrandsLoading } = useSeatDoorLuggageBrandsQuery();
-
   const router = useRouter();
+
+  useEffect(() => {
+    // Only access localStorage on client side
+    if (typeof window !== 'undefined') {
+      const reservationData = localStorage.getItem("reservation");
+      if (reservationData) {
+        setReservation(JSON.parse(reservationData));
+      }
+    }
+  }, []);
 
   // Apply filters to the data
   const filteredVehicles = data?.data?.result?.filter(vehicle => {
@@ -106,18 +113,66 @@ export default function CarRental() {
   };
 
   const handleBrandChange = (brand) => {
-    setFilters(prev => {
-      const newBrands = prev.brands.includes(brand)
+    setFilters(prev => ({
+      ...prev,
+      brands: prev.brands.includes(brand)
         ? prev.brands.filter(b => b !== brand)
-        : [...prev.brands, brand];
-      return { ...prev, brands: newBrands };
-    });
+        : [...prev.brands, brand]
+    }));
     setCurrentPage(1);
   };
 
   const handlePriceChange = (value) => {
     setFilters({ ...filters, priceRange: value });
     setCurrentPage(1);
+  };
+
+  const handleValue = (vehicle) => {
+    if (typeof window !== 'undefined') {
+      const storedData = localStorage.getItem('reservation');
+      let dataArray = storedData ? JSON.parse(storedData) : [];
+
+      if (Array.isArray(dataArray)) {
+        const updatedData = dataArray.map(obj => ({
+          ...obj,
+          ...vehicle
+        }));
+        localStorage.setItem('reservation', JSON.stringify(updatedData));
+      }
+    }
+    router.push('/booking-extras');
+  };
+
+  const formatDate = (dateTimeString) => {
+    if (!dateTimeString) return '';
+    const date = new Date(dateTimeString);
+    if (isNaN(date.getTime())) return dateTimeString;
+
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  const formatTime = (timeString) => {
+    if (!timeString) return '';
+
+    let date = new Date(timeString);
+    if (isNaN(date.getTime())) {
+      const [hours, minutes] = timeString.split(':').map(Number);
+      if (!isNaN(hours) && !isNaN(minutes)) {
+        date = new Date();
+        date.setHours(hours, minutes, 0, 0);
+      }
+    }
+    if (isNaN(date.getTime())) return timeString;
+
+    let hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? 'pm' : 'am';
+    hours = hours % 12;
+    hours = hours || 12;
+    return `${hours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
   };
 
   // Calculate total pages from API meta data
@@ -140,63 +195,7 @@ export default function CarRental() {
     ? [...new Set(seatDoorLuggageBrands.data.brands)].sort()
     : ["Ford", "Forida", "Forida Apa", "Toyota", "Toyota7"];
 
-
-
-  const handleValue = (value) => {
-    // console.log(value._id);
-    // localStorage.setItem("vehicle", JSON.stringify(value));
-    const storedData = localStorage.getItem('reservation');
-    console.log(storedData);
-    let dataArray = storedData ? JSON.parse(storedData) : [];
-
-    // 2. Check if it's an array and not empty
-    if (Array.isArray(dataArray) && dataArray.length > 0) {
-      // 3. Add the new key-value pair to each object
-      dataArray = dataArray.map(obj => {
-        return {
-          ...obj,
-          ...value
-        };
-      });
-
-      // 4. Save the updated array back to localStorage
-      localStorage.setItem('reservation', JSON.stringify(dataArray));
-    }
-
-  }
-
-
-  const formatDate = (dateTimeString) => {
-    const date = new Date(dateTimeString);
-    const day = date.getDate();
-    const month = date.getMonth() + 1; // Months are 0-based
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  };
-
-  const formatTime = (timeString) => {
-    console.log(timeString);
-    let date = new Date(timeString);
-    if (isNaN(date.getTime())) {
-      const [hours, minutes] = timeString?.split(':').map(Number);
-      if (!isNaN(hours) && !isNaN(minutes)) {
-        date = new Date();
-        date.setHours(hours, minutes, 0, 0);
-      }
-    }
-    if (isNaN(date.getTime())) {
-      return timeString;
-    }
-    let hours = date.getHours();
-    const minutes = date.getMinutes();
-    const ampm = hours >= 12 ? 'pm' : 'am';
-    hours = hours % 12;
-    hours = hours ? hours : 12;
-    return `${hours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
-  };
-
-  const vehicle = reservation.length > 0 ? reservation[0] : {};
-
+  const currentVehicle = reservation.length > 0 ? reservation[0] : {};
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -213,14 +212,12 @@ export default function CarRental() {
       <div className="flex flex-col md:flex-row gap-8">
         {/* Left sidebar */}
         <div className="md:w-1/4 flex flex-col gap-2">
-          <div className=" bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-            {/* Location Header */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
             <div className="mb-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
                 Location
               </h2>
 
-              {/* Pick-up Section */}
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">
                   Pick-up
@@ -230,7 +227,7 @@ export default function CarRental() {
                   <MapPin className="w-5 h-5 text-gray-500 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-gray-700 font-medium">
-                      {vehicle.pickupLocationName}
+                      {currentVehicle.pickupLocationName || 'Not specified'}
                     </p>
                   </div>
                 </div>
@@ -244,7 +241,6 @@ export default function CarRental() {
                 </div>
               </div>
 
-              {/* Return Section */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">
                   Return
@@ -254,8 +250,7 @@ export default function CarRental() {
                   <MapPin className="w-5 h-5 text-gray-500 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-gray-700 font-medium">
-                      {" "}
-                      {vehicle.returnLocationName}
+                      {currentVehicle.returnLocationName || 'Not specified'}
                     </p>
                   </div>
                 </div>
@@ -263,7 +258,7 @@ export default function CarRental() {
                 <div className="flex items-center gap-3">
                   <Calendar className="w-5 h-5 text-gray-500 flex-shrink-0" />
                   <p className="text-gray-700">
-                    {formatDate(reservation[0].returnDate)},{" "}
+                    {formatDate(reservation[0]?.returnDate)},{" "}
                     {formatTime(reservation[0]?.returnTime)}
                   </p>
                 </div>
@@ -278,201 +273,133 @@ export default function CarRental() {
 
             <Collapse
               bordered={false}
-              defaultActiveKey={[
-                "price",
-                "transmission",
-                "seats",
-                "doors",
-                "luggage",
-                "brands",
-              ]}
-              items={[
-                // Price Filter
-                {
-                  key: "price",
-                  label: "Price Range",
-                  className: "filter-panel",
-                  children: (
-                    <>
-                      <Slider
-                        range
-                        min={0}
-                        max={1000}
-                        value={filters.priceRange}
-                        onChange={handlePriceChange}
-                        trackStyle={[{ backgroundColor: "#10B981" }]}
-                        handleStyle={[
-                          {
-                            borderColor: "#10B981",
-                            backgroundColor: "#10B981",
-                          },
-                          {
-                            borderColor: "#10B981",
-                            backgroundColor: "#10B981",
-                          },
-                        ]}
-                      />
-                      <div className="flex justify-between mt-2">
-                        <span>${filters.priceRange[0]}</span>
-                        <span>${filters.priceRange[1]}</span>
-                      </div>
-                    </>
-                  ),
-                },
-                // Transmission Filter
-                {
-                  key: "transmission",
-                  label: "Transmission Type",
-                  className: "filter-panel",
-                  children: (
-                    <Radio.Group
-                      onChange={handleTransmissionChange}
-                      value={filters.transmission}
+              defaultActiveKey={["price", "transmission", "seats", "doors", "luggage", "brands"]}
+            >
+              {/* Price Filter */}
+              <Panel header="Price Range" key="price" className="filter-panel">
+                <Slider
+                  range
+                  min={0}
+                  max={1000}
+                  value={filters.priceRange}
+                  onChange={handlePriceChange}
+                  trackStyle={[{ backgroundColor: "#10B981" }]}
+                  handleStyle={[
+                    { borderColor: "#10B981", backgroundColor: "#10B981" },
+                    { borderColor: "#10B981", backgroundColor: "#10B981" }
+                  ]}
+                />
+                <div className="flex justify-between mt-2">
+                  <span>₦{filters.priceRange[0]}</span>
+                  <span>₦{filters.priceRange[1]}</span>
+                </div>
+              </Panel>
+
+              {/* Transmission Filter */}
+              <Panel header="Transmission Type" key="transmission" className="filter-panel">
+                <Radio.Group
+                  onChange={handleTransmissionChange}
+                  value={filters.transmission}
+                >
+                  <Radio value="" className="block mb-2">All</Radio>
+                  <Radio value="automatic" className="block mb-2">Automatic</Radio>
+                  <Radio value="manual" className="block">Manual</Radio>
+                </Radio.Group>
+              </Panel>
+
+              {/* Seats Filter */}
+              <Panel header="Seats Required" key="seats" className="filter-panel">
+                <div className="grid grid-cols-3 gap-3">
+                  <div
+                    className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.seats === 0 ? "border border-green-500 text-green-500" : "border border-gray-300"
+                      }`}
+                    onClick={() => handleSeatsChange(0)}
+                  >
+                    All
+                  </div>
+                  {seatOptions.map((num) => (
+                    <div
+                      key={num}
+                      className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.seats === num ? "border border-green-500 text-green-500" : "border border-gray-300"
+                        }`}
+                      onClick={() => handleSeatsChange(num)}
                     >
-                      <Radio value="" className="block mb-2">
-                        <div className="flex items-center">All</div>
-                      </Radio>
-                      <Radio value="automatic" className="block mb-2">
-                        <div className="flex items-center">Automatic</div>
-                      </Radio>
-                      <Radio value="manual" className="block">
-                        <div className="flex items-center">Manual</div>
-                      </Radio>
-                    </Radio.Group>
-                  ),
-                },
-                // Seats Filter
-                {
-                  key: "seats",
-                  label: "Seats Required",
-                  className: "filter-panel",
-                  children: (
-                    <div className="grid grid-cols-3 gap-3">
-                      <div
-                        className={`flex justify-center items-center py-2 cursor-pointer text-center ${
-                          filters.seats === 0
-                            ? "border border-green-500 text-green-500"
-                            : "border border-gray-300"
+                      {num}
+                    </div>
+                  ))}
+                </div>
+              </Panel>
+
+              {/* Doors Filter */}
+              <Panel header="Doors Required" key="doors" className="filter-panel">
+                <div className="grid grid-cols-3 gap-3">
+                  <div
+                    className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.doors === 0 ? "border border-green-500 text-green-500" : "border border-gray-300"
+                      }`}
+                    onClick={() => handleDoorsChange(0)}
+                  >
+                    All
+                  </div>
+                  {doorOptions.map((num) => (
+                    <div
+                      key={num}
+                      className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.doors === num ? "border border-green-500 text-green-500" : "border border-gray-300"
                         }`}
-                        onClick={() => handleSeatsChange(0)}
-                      >
-                        All
-                      </div>
-                      {seatOptions.map((num) => (
-                        <div
-                          key={num}
-                          className={`flex justify-center items-center py-2 cursor-pointer text-center ${
-                            filters.seats === num
-                              ? "border border-green-500 text-green-500"
-                              : "border border-gray-300"
-                          }`}
-                          onClick={() => handleSeatsChange(num)}
-                        >
-                          {num}
-                        </div>
-                      ))}
+                      onClick={() => handleDoorsChange(num)}
+                    >
+                      {num}
                     </div>
-                  ),
-                },
-                // Doors Filter
-                {
-                  key: "doors",
-                  label: "Doors Required",
-                  className: "filter-panel",
-                  children: (
-                    <div className="grid grid-cols-3 gap-3">
-                      <div
-                        className={`flex justify-center items-center py-2 cursor-pointer text-center ${
-                          filters.doors === 0
-                            ? "border border-green-500 text-green-500"
-                            : "border border-gray-300"
+                  ))}
+                </div>
+              </Panel>
+
+              {/* Luggage Filter */}
+              <Panel header="Luggage Capacity" key="luggage" className="filter-panel">
+                <div className="grid grid-cols-3 gap-3">
+                  <div
+                    className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.luggage === 0 ? "border border-green-500 text-green-500" : "border border-gray-300"
+                      }`}
+                    onClick={() => handleLuggageChange(0)}
+                  >
+                    All
+                  </div>
+                  {luggageOptions.map((num) => (
+                    <div
+                      key={num}
+                      className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.luggage === num ? "border border-green-500 text-green-500" : "border border-gray-300"
                         }`}
-                        onClick={() => handleDoorsChange(0)}
-                      >
-                        All
-                      </div>
-                      {doorOptions.map((num) => (
-                        <div
-                          key={num}
-                          className={`flex justify-center items-center py-2 cursor-pointer text-center ${
-                            filters.doors === num
-                              ? "border border-green-500 text-green-500"
-                              : "border border-gray-300"
-                          }`}
-                          onClick={() => handleDoorsChange(num)}
-                        >
-                          {num}
-                        </div>
-                      ))}
+                      onClick={() => handleLuggageChange(num)}
+                    >
+                      {num}
                     </div>
-                  ),
-                },
-                // Luggage Filter
-                {
-                  key: "luggage",
-                  label: "Luggage Capacity",
-                  className: "filter-panel",
-                  children: (
-                    <div className="grid grid-cols-3 gap-3">
-                      <div
-                        className={`flex justify-center items-center py-2 cursor-pointer text-center ${
-                          filters.luggage === 0
-                            ? "border border-green-500 text-green-500"
-                            : "border border-gray-300"
-                        }`}
-                        onClick={() => handleLuggageChange(0)}
-                      >
-                        All
-                      </div>
-                      {luggageOptions.map((num) => (
-                        <div
-                          key={num}
-                          className={`flex justify-center items-center py-2 cursor-pointer text-center ${
-                            filters.luggage === num
-                              ? "border border-green-500 text-green-500"
-                              : "border border-gray-300"
-                          }`}
-                          onClick={() => handleLuggageChange(num)}
-                        >
-                          {num}
-                        </div>
-                      ))}
+                  ))}
+                </div>
+              </Panel>
+
+              {/* Brands Filter */}
+              <Panel header="Brands" key="brands" className="filter-panel">
+                <div className="space-y-2">
+                  {brandOptions.map((brand) => (
+                    <div
+                      key={brand}
+                      className="flex items-center cursor-pointer gap-2"
+                      onClick={() => handleBrandChange(brand)}
+                    >
+                      <Checkbox checked={filters.brands.includes(brand)} className="mr-2" />
+                      <span>{brand}</span>
                     </div>
-                  ),
-                },
-                // Brands Filter
-                {
-                  key: "brands",
-                  label: "Brands",
-                  className: "filter-panel",
-                  children: (
-                    <div className="space-y-2">
-                      {brandOptions.map((brand) => (
-                        <div
-                          key={brand}
-                          className="flex items-center cursor-pointer gap-2"
-                          onClick={() => handleBrandChange(brand)}
-                        >
-                          <Checkbox
-                            checked={filters.brands.includes(brand)}
-                            className="mr-2"
-                          />
-                          <span>{brand}</span>
-                        </div>
-                      ))}
-                    </div>
-                  ),
-                },
-              ]}
-            />
+                  ))}
+                </div>
+              </Panel>
+            </Collapse>
           </div>
         </div>
 
         {/* Main content */}
         <div className="md:w-3/4">
           {isLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <CustomLoading />
+            <div className="h-[300px] w-full flex justify-center items-center">
+              <Spin size="default" />
             </div>
           ) : error ? (
             <div className="flex justify-center items-center h-64">
@@ -492,11 +419,12 @@ export default function CarRental() {
                       cover={
                         <img
                           alt={vehicle.name}
-                          src={
-                            `${baseURL}${vehicle.image}` ||
-                            "/images/default-car.jpg"
-                          }
+                          src={`${baseURL}${vehicle.image}` || "/images/default-car.jpg"}
                           className="w-full h-48 object-cover"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "/images/default-car.jpg";
+                          }}
                         />
                       }
                       style={{ padding: "12px" }}
@@ -504,21 +432,16 @@ export default function CarRental() {
                     >
                       <div className="flex justify-between items-center mb-1">
                         <div className="flex items-center">
-                          <Rate
-                            disabled
-                            defaultValue={4.5}
-                            className="text-xs"
-                          />
+                          <Rate disabled defaultValue={4.5} className="text-xs" />
                           <span className="text-xs text-gray-500 ml-1">
                             ({(vehicle.bookings?.length || 0) + 10} Reviews)
                           </span>
                         </div>
                         <span
-                          className={`text-xs px-2 py-1 rounded ${
-                            vehicle.status === "AVAILABLE"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
+                          className={`text-xs px-2 py-1 rounded ${vehicle.status === "AVAILABLE"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                            }`}
                         >
                           {vehicle.status}
                         </span>
@@ -562,17 +485,12 @@ export default function CarRental() {
                       </div>
 
                       <Button
-                        onClick={() => {
-                          handleValue(vehicle);
-                          router.push(`/booking-extras`);
-                        }}
+                        onClick={() => handleValue(vehicle)}
                         className="Vehicles"
                         block
                         disabled={vehicle.status !== "AVAILABLE"}
                       >
-                        {vehicle.status === "AVAILABLE"
-                          ? "BOOK NOW"
-                          : "NOT AVAILABLE"}
+                        {vehicle.status === "AVAILABLE" ? "BOOK NOW" : "NOT AVAILABLE"}
                       </Button>
                     </Card>
                   </div>
@@ -587,11 +505,10 @@ export default function CarRental() {
                       (page) => (
                         <li
                           key={page}
-                          className={`mx-1 w-8 h-8 flex items-center justify-center rounded-md ${
-                            currentPage === page
-                              ? "bg-green-500 text-white"
-                              : "border border-gray-300"
-                          }`}
+                          className={`mx-1 w-8 h-8 flex items-center justify-center rounded-md ${currentPage === page
+                            ? "bg-green-500 text-white"
+                            : "border border-gray-300"
+                            }`}
                         >
                           <button
                             className="w-full h-full"

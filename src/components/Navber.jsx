@@ -17,7 +17,7 @@ const Navbar = () => {
     if (path === '/') return 'home';
     if (path === '/fleet') return 'fleet';
     if (path === '/team') return 'team';
-    if (path === '/booking') return 'booking';
+    if (path === '/booking' || path === '/reservationdetails') return 'booking';
     if (path === '/about') return 'about';
     return 'home'; // default fallback
   };
@@ -79,7 +79,7 @@ const Navbar = () => {
           <img
             src="/images/logo.png"
             alt="Logo"
-            className="h-7 sm:h-8 md:h-9 lg:h-10"
+            className="h-10 sm:h-8 md:h-9 lg:h-14 "
           />
         </Link>
 

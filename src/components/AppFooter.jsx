@@ -4,6 +4,7 @@ import { Col, Layout, Row, Space, Typography } from 'antd';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useGetFAQQuery } from '../features/Home_page/HomeApi';
+import { GoCodeReview } from "react-icons/go";
 
 const { Footer } = Layout;
 const { Title, Text } = Typography;
@@ -66,6 +67,11 @@ const AppFooter = () => {
               <Space>
                 <MailOutlined style={{ color: 'white' }} />
                 <Text style={{ color: 'white' }} className="text-white">{isLoading ? 'Loading...' : faq?.data?.contact?.email}</Text>
+              </Space>
+              <Space>
+                {/* <MailOutlined style={{ color: 'white' }} /> */}
+                <GoCodeReview style={{ color: 'white' , fontSize: '16px'}} />
+                <a href="https://www.google.com/search?sca_esv=fb03314f468d4f44&sxsrf=AE3TifNWwM4jnX0HROcU7JQnM0Xn6VQ-GA:1750504273447&si=AMgyJEtREmoPL4P1I5IDCfuA8gybfVI2d5Uj7QMwYCZHKDZ-E40EGIDnNFJdFdBrTGiLkjBffYo0U6dSsc2XJ-Je_ZB9Riv9070KVyWEbDc62fNzWuKjCtuSDVYyAB7HNld64td6N6WS&q=TheLuxAuto+Reviews&sa=X&ved=2ahUKEwjT8JXLsIKOAxV4-TgGHWY3C3IQ0bkNegQIKRAE&biw=1920&bih=911&dpr=1#lrd=0x103bf58e9b6025bd:0x3d28813529ffe89f,3,,,," target="_blank" rel="noopener noreferrer"><Text style={{ color: 'white',textDecoration: 'underline' }} className="text-white">Give FeedBack</Text></a>
               </Space>
             </Space>
           </Col>

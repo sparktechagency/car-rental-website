@@ -10,7 +10,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
 import { baseURL } from "../../../utils/BaseURL";
-import CustomLoading from "../../components/CustomLoading";
 import { useGetAllExtraServiceQuery } from "../../features/reservation_page/reservationApi";
 
 // Utility functions
@@ -57,9 +56,6 @@ const formatTime = (timeString) => {
 const fetchLocationDetails = async (locationId) => {
   try {
     const response = await fetch(`${baseURL}/api/locations/${locationId}`);
-    if (!response.ok) {
-      throw new Error("Failed to fetch location");
-    }
     const data = await response.json();
     return data.data || data; // Adjust based on your API response structure
   } catch (error) {
@@ -216,7 +212,7 @@ export default function BookingExtras() {
   const [pickupLocation, setPickupLocation] = useState(null);
   const [returnLocation, setReturnLocation] = useState(null);
   const [locationsLoading, setLocationsLoading] = useState(false);
-  // const data = localStorage.getItem("reservation");
+  const [buttonLoading, setButtonLoading] = useState(false);
   const [addedServices, setAddedServices] = useState({
     count: 0,
     cost: 0,
@@ -365,12 +361,19 @@ export default function BookingExtras() {
     []
   );
 
+  const handleContinueBooking = () => {
+    setButtonLoading(true);
+    setTimeout(() => {
+      router.push("/checkout");
+    }, 1000);
+  };
+
   const vehicle = reservation.length > 0 ? reservation[0] : {};
 
   if (!isClient || loading) {
     return (
-      <div className="container mx-auto px-4 py-8 flex justify-center items-center min-h-[50vh]">
-        <CustomLoading />
+      <div className="h-[300px] w-full flex justify-center items-center">
+        <Spin size='default' />
       </div>
     );
   }
@@ -602,8 +605,8 @@ export default function BookingExtras() {
               </div>
               <div className="flex justify-end mt-6">
                 <Button
-                  loading={loading}
-                  onClick={() => router.push("/checkout")}
+                  loading={buttonLoading}
+                  onClick={handleContinueBooking}
                   type="primary"
                   className="bg-green-500 border-green-500 hover:bg-green-600"
                   size="large"

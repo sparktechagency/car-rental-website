@@ -2,8 +2,9 @@
 const nextConfig = {
   images: {
     domains: [
-      "10.0.60.110"
-    ]
+      "10.0.60.110",
+      "pravab3001.binarybards.online"
+    ],
   },
 };
 

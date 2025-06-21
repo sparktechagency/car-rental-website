@@ -425,7 +425,6 @@ export default function Checkout() {
                 <Form.Item name="paymentMethod" rules={[{ required: true }]}>
                   <Select placeholder="Select Payment Method">
                     <Option value="STRIPE">STRIPE</Option>
-                    <Option value="BANK">BANK</Option>
                   </Select>
                 </Form.Item>
               </div>

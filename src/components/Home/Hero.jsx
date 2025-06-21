@@ -14,10 +14,14 @@ import {
   TimePicker,
 } from "antd";
 import dayjs from "dayjs";
+import { useRouter } from 'next/navigation';
 import { useState } from "react";
 import { useGetLocationQuery } from "../../features/LocationApi";
 
 const Hero = () => {
+
+  const router = useRouter();
+
   const [formData, setFormData] = useState({
     sameLocation: true,
     pickupLocationId: "",
@@ -153,7 +157,7 @@ const Hero = () => {
       isPickupTooEarly(formData.pickupDate, time)
     ) {
       setErrors({
-        pickupTime: "Pickup time must be at least 1 minute after current time",
+        pickupTime: "Pickup must be 1+ minutes ahead",
       });
       return;
     }
@@ -183,11 +187,11 @@ const Hero = () => {
 
     if (pickupDate && pickupTime && isPickupTooEarly(pickupDate, pickupTime)) {
       newErrors.pickupTime =
-        "Pickup time must be at least 1 minute after current time";
+        "Pickup must be 1+ minutes ahead";
     }
 
     if (!isMinimumDuration(pickupDate, pickupTime, returnDate, returnTime)) {
-      newErrors.returnTime = "Minimum reservation length is 3 hours";
+      newErrors.returnTime = "Minimum reservation 3 hours";
     }
 
     if (returnDate?.isBefore(pickupDate)) {
@@ -218,8 +222,8 @@ const Hero = () => {
     setTimeout(() => {
       localStorage.setItem("reservation", JSON.stringify([reservationData]));
       setIsLoading(false);
-      window.location.href = "/Reservation";
-    }, 2000);
+      router.push("/Reservation");
+    }, 1500);
   };
 
   // Disabled date/time functions
@@ -403,7 +407,7 @@ const Hero = () => {
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 {/* Pick-up Date */}
                 <div className="col-span-1">
-                  <p className="text-xs text-gray-500 mb-1">Pick-up Date*</p>
+                  <p className="text-xs text-gray-500 mb-1">Pick-up Date</p>
                   <DatePicker
                     placeholder="Pick-up date*"
                     className="w-full"
@@ -426,7 +430,7 @@ const Hero = () => {
 
                 {/* Pick-up Time */}
                 <div className="col-span-1">
-                  <p className="text-xs text-gray-500 mb-1">Pick-up Time*</p>
+                  <p className="text-xs text-gray-500 mb-1">Pick-up Time</p>
                   <TimePicker
                     placeholder="Pick-up time*"
                     className="w-full"
@@ -451,7 +455,7 @@ const Hero = () => {
 
                 {/* Return Date */}
                 <div className="col-span-1">
-                  <p className="text-xs text-gray-500 mb-1">Return Date*</p>
+                  <p className="text-xs text-gray-500 mb-1">Return Date</p>
                   <DatePicker
                     placeholder="Return date*"
                     className="w-full"
@@ -474,7 +478,7 @@ const Hero = () => {
 
                 {/* Return Time */}
                 <div className="col-span-1">
-                  <p className="text-xs text-gray-500 mb-1">Return Time*</p>
+                  <p className="text-xs text-gray-500 mb-1">Return Time</p>
                   <TimePicker
                     placeholder="Return time*"
                     className="w-full"
