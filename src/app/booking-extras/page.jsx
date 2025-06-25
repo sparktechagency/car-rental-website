@@ -72,6 +72,7 @@ const AddonCard = React.memo(
     description,
     price,
     isFree,
+    isPerDay,
     onAddToggle,
     isAdded,
     initialQuantity = 1,
@@ -133,7 +134,7 @@ const AddonCard = React.memo(
         <p className="text-sm text-gray-600 mb-4 flex-grow">{description}</p>
 
         <div className="mb-3">
-          <span className="text-xs text-gray-500">Per day</span>
+          <span className="text-xs text-gray-500">{isPerDay ? "Per Day" : "one-time" }</span>
           <p className="text-green-600 font-bold text-lg">
             {formatCurrency(price)}
           </p>
@@ -584,6 +585,7 @@ export default function BookingExtras() {
                     key={addon._id}
                     icon={addon.image}
                     title={addon.name}
+                    isPerDay={addon.isPerDay}
                     description={addon.description}
                     price={addon.cost}
                     isFree={addon.isFree}

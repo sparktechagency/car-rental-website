@@ -3,7 +3,9 @@
 import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
+  CalendarOutlined,
   CarOutlined,
+  ClockCircleOutlined,
   EnvironmentOutlined,
   SettingOutlined,
   UserOutlined,
@@ -11,15 +13,20 @@ import {
 import {
   Button,
   Checkbox,
+  DatePicker,
   Divider,
   Form,
   Input,
-  Select,
-  Typography,
   message,
+  Modal,
+  Select,
+  TimePicker,
+  Typography,
 } from "antd";
 import PhoneInput from "antd-phone-input";
+import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { baseURL } from "../../../utils/BaseURL";
 import { useCreatingBookingMutation } from "../../features/reservation_page/reservationApi";
 
@@ -31,6 +38,10 @@ export default function Checkout() {
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm();
   const router = useRouter();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editType, setEditType] = useState(null); // 'pickup' or 'return'
+  const [editDate, setEditDate] = useState(null);
+  const [editTime, setEditTime] = useState(null);
 
   // Get reservation data from localStorage
   const reservationData =
@@ -90,6 +101,112 @@ export default function Checkout() {
     });
   };
 
+  const showModal = (type) => {
+    setEditType(type);
+    if (type === 'pickup') {
+      setEditDate(dayjs(item.pickupDate));
+      setEditTime(dayjs(item.pickupTime, 'HH:mm'));
+    } else {
+      setEditDate(dayjs(item.returnDate));
+      setEditTime(dayjs(item.returnTime, 'HH:mm'));
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleOk = () => {
+    if (!editDate || !editTime) {
+      messageApi.error('Please select both date and time');
+      return;
+    }
+
+    const updatedReservation = [...reservation];
+    if (editType === 'pickup') {
+      updatedReservation[0].pickupDate = editDate.format('YYYY-MM-DD');
+      updatedReservation[0].pickupTime = editTime.format('HH:mm');
+
+      // Auto-update return time if pickup is after current return
+      const newPickupDateTime = editDate.hour(editTime.hour()).minute(editTime.minute());
+      const currentReturnDateTime = dayjs(updatedReservation[0].returnDate)
+        .hour(dayjs(updatedReservation[0].returnTime, 'HH:mm').hour())
+        .minute(dayjs(updatedReservation[0].returnTime, 'HH:mm').minute());
+
+      if (newPickupDateTime.isAfter(currentReturnDateTime)) {
+        const newReturnDateTime = newPickupDateTime.add(3, 'hour');
+        updatedReservation[0].returnDate = newReturnDateTime.format('YYYY-MM-DD');
+        updatedReservation[0].returnTime = newReturnDateTime.format('HH:mm');
+      }
+    } else {
+      updatedReservation[0].returnDate = editDate.format('YYYY-MM-DD');
+      updatedReservation[0].returnTime = editTime.format('HH:mm');
+    }
+
+    localStorage.setItem("reservation", JSON.stringify(updatedReservation));
+    setIsModalOpen(false);
+    // window.location.reload(); // Refresh to show updated values
+  };
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
+  };
+
+  const disabledPickupDate = (current) =>
+    current && current < dayjs().startOf("day");
+
+  const disabledReturnDate = (current) => {
+    const minDate = editType === 'return' ? dayjs(item.pickupDate) : dayjs();
+    return current && current < minDate.startOf("day");
+  };
+
+  const disabledPickupTime = () => {
+    if (!editDate?.isSame(dayjs(), "day")) {
+      return { disabledHours: () => [], disabledMinutes: () => [] };
+    }
+
+    const minTime = dayjs().add(1, "minute");
+    const minHour = minTime.hour();
+    const minMinute = minTime.minute();
+
+    return {
+      disabledHours: () => Array.from({ length: minHour }, (_, i) => i),
+      disabledMinutes: (selectedHour) => {
+        if (selectedHour === minHour) {
+          return Array.from({ length: minMinute }, (_, i) => i);
+        }
+        if (selectedHour < minHour) {
+          return Array.from({ length: 60 }, (_, i) => i);
+        }
+        return [];
+      },
+    };
+  };
+
+  const disabledReturnTime = () => {
+    if (editType !== 'return' || !editDate?.isSame(dayjs(item.pickupDate), "day")) {
+      return { disabledHours: () => [], disabledMinutes: () => [] };
+    }
+
+    const pickupDateTime = dayjs(item.pickupDate)
+      .hour(dayjs(item.pickupTime, 'HH:mm').hour())
+      .minute(dayjs(item.pickupTime, 'HH:mm').minute());
+
+    const minReturnTime = pickupDateTime.add(3, "hour");
+    const minHour = minReturnTime.hour();
+    const minMinute = minReturnTime.minute();
+
+    return {
+      disabledHours: () => Array.from({ length: minHour }, (_, i) => i),
+      disabledMinutes: (selectedHour) => {
+        if (selectedHour === minHour) {
+          return Array.from({ length: minMinute }, (_, i) => i);
+        }
+        if (selectedHour < minHour) {
+          return Array.from({ length: 60 }, (_, i) => i);
+        }
+        return [];
+      },
+    };
+  };
+
   const onFinish = async (values) => {
     try {
       // Combine date and time
@@ -146,15 +263,12 @@ export default function Checkout() {
 
       const response = await createBooking(bookingPayload).unwrap();
       localStorage.setItem("bookingId", item._id);
-      console.log({ response })
-      console.log({ response: response?.data?.url })
       router.push(`${response?.data?.url}`);
     } catch (error) {
       console.error("Booking error:", error);
       messageApi.error(error?.data?.message || "Failed to create booking");
     }
   };
-
 
   const vehicle = reservation.length > 0 ? reservation[0] : {};
 
@@ -186,7 +300,10 @@ export default function Checkout() {
 
             <div className="mb-4">
               <p className="font-semibold mb-2">Pick-up</p>
-              <div className="flex items-center mb-2">
+              <div
+                className="flex items-center mb-2 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                onClick={() => showModal('pickup')}
+              >
                 <EnvironmentOutlined className="mt-1 mr-2 text-gray-500" />
                 <div>
                   <p className="text-base">{vehicle.pickupLocationName}</p>
@@ -199,7 +316,10 @@ export default function Checkout() {
 
             <div className="mb-6">
               <p className="font-semibold mb-2">Return</p>
-              <div className="flex items-center mb-2">
+              <div
+                className="flex items-center mb-2 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                onClick={() => showModal('return')}
+              >
                 <EnvironmentOutlined className="mt-1 mr-2 text-gray-500" />
                 <div>
                   <p className="text-base">
@@ -485,6 +605,43 @@ export default function Checkout() {
           </Form>
         </div>
       </div>
+
+      {/* Edit Date/Time Modal */}
+      <Modal
+        title={`Edit ${editType === 'pickup' ? 'Pick-up' : 'Return'} Date & Time`}
+        open={isModalOpen}
+        onOk={handleOk}
+        onCancel={handleCancel}
+        okText="Update"
+        cancelText="Cancel"
+      >
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm text-gray-500 mb-1">Date</p>
+            <DatePicker
+              className="w-full"
+              format="DD/MM/YYYY"
+              suffixIcon={<CalendarOutlined className="text-green-500" />}
+              allowClear={false}
+              disabledDate={editType === 'pickup' ? disabledPickupDate : disabledReturnDate}
+              onChange={(date) => setEditDate(date)}
+              value={editDate}
+            />
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 mb-1">Time</p>
+            <TimePicker
+              className="w-full"
+              format="HH:mm"
+              suffixIcon={<ClockCircleOutlined className="text-green-500" />}
+              allowClear={false}
+              disabledTime={editType === 'pickup' ? disabledPickupTime : disabledReturnTime}
+              onChange={(time) => setEditTime(time)}
+              value={editTime}
+            />
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

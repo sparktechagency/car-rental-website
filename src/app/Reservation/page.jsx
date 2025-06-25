@@ -188,7 +188,9 @@ export default function CarRental() {
     : [4, 5, 6, 7, 50];
 
   const luggageOptions = seatDoorLuggageBrands?.data?.luggageCounts
-    ? [...new Set(seatDoorLuggageBrands.data.luggageCounts)].sort((a, b) => a - b)
+    ? [...new Set(seatDoorLuggageBrands.data.luggageCounts)]
+      .filter(num => num !== 0) // This removes 0
+      .sort((a, b) => a - b)
     : [4, 6, 7, 8, 40];
 
   const brandOptions = seatDoorLuggageBrands?.data?.brands
@@ -370,7 +372,7 @@ export default function CarRental() {
                         }`}
                       onClick={() => handleLuggageChange(num)}
                     >
-                      {num}
+                      {num === 0 ? null : num}
                     </div>
                   ))}
                 </div>
@@ -419,12 +421,8 @@ export default function CarRental() {
                       cover={
                         <img
                           alt={vehicle.name}
-                          src={`${baseURL}${vehicle.image}` || "/images/default-car.jpg"}
+                          src={`${baseURL}${vehicle.image}`}
                           className="w-full h-48 object-cover"
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = "/images/default-car.jpg";
-                          }}
                         />
                       }
                       style={{ padding: "12px" }}

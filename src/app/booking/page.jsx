@@ -24,7 +24,7 @@ export default function ReservationPage() {
         setLoading(false);
       } else if (bookingData.success === true) {
         // Handle successful response
-        router.push(`/reservationdetails?bookingId=${data.referenceId}&email=${data.email}`);
+        router.push(`/reservationdetails?bookingId=${data.referenceId}&clientEmail=${data.email}`);
         message.success('Booking details retrieved successfully');
         setLoading(false);
         // You can redirect or show booking details here
