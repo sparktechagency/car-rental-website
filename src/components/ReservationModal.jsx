@@ -705,7 +705,6 @@ const ReservationModal = ({
                 type="primary"
                 className="w-full h-12 sm:h-14 text-white font-medium text-base sm:text-lg"
                 onClick={handleSubmit}
-                style={{ backgroundColor: "#10B981", borderColor: "#10B981" }}
               >
                 MAKE RESERVATION
               </Button>

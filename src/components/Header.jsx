@@ -11,29 +11,26 @@ const Header = () => {
       <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
         {/* Contact Info - optimized mobile layout */}
         <div className="w-full md:w-auto grid grid-cols-2 md:flex md:flex-row md:space-x-6 gap-y-1 md:gap-y-0 mb-1 md:mb-0">
-          <Link
-            href="tel:+2349122308240"
+          <div
             className="flex items-center justify-center gap-1.5 md:gap-2 text-white hover:text-amber-400 text-[11px] xs:text-xs sm:text-sm md:text-base"
           >
             <CallIcons className="w-3 h-3 min-w-[12px] md:w-5 md:h-5" />
             <span className="truncate">{isLoading ? 'Loading...' : faq?.data?.contact?.phone}</span>
-          </Link>
+          </div>
 
-          <Link
-            href="tel:+2348103484586"
+          <div
             className="flex items-center gap-1.5 md:gap-2 text-white hover:text-amber-400 text-[11px] xs:text-xs sm:text-sm md:text-base"
           >
             <WhatsApp className="w-3 h-3 min-w-[12px] md:w-5 md:h-5" />
             <span className="truncate">{isLoading ? 'Loading...' : faq?.data?.contact?.phone}</span>
-          </Link>
+          </div>
 
-          <Link
-            href="mailto:info@theluxauto.com"
+          <div
             className="col-span-2 flex items-center gap-1.5 md:gap-2 text-white hover:text-amber-400 text-[11px] xs:text-xs sm:text-sm md:text-base justify-center md:justify-start"
           >
             <EmailIcons className="w-3 h-3 min-w-[12px] md:w-5 md:h-5 flex-shrink-0" />
             <span className="truncate text-center md:text-left">{isLoading ? 'Loading...' : faq?.data?.contact?.email}</span>
-          </Link>
+          </div>
         </div>
 
         {/* Social Icons - better mobile alignment */}

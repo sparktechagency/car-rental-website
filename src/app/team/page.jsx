@@ -3,10 +3,16 @@
 
 import { baseURL } from '../../../utils/BaseURL';
 import CustomBanner from '../../components/CustomBanner';
+import CustomLoading from '../../components/CustomLoading';
 import { useTeamQuery } from '../../features/meetTeam/MeetTeamApi';
 
 const TeamPage = () => {
-  const { data } = useTeamQuery();
+  const { data , isLoading } = useTeamQuery();
+  if(isLoading) {
+    return (
+      <CustomLoading />
+    )
+  }
 
   return (
     <div className=" bg-gray-50">

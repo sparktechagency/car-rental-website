@@ -1,26 +1,25 @@
 "use client";
-import { useState, useEffect } from 'react';
-import { Button, Rate, Card, Avatar, Row, Col, Typography, Space } from 'antd';
-import { LeftOutlined, RightOutlined } from '@ant-design/icons';
+
+import { useEffect, useRef, useState } from 'react';
 import { useGetReviewsQuery } from '../../features/Home_page/HomeApi';
 
-const { Title, Text, Paragraph } = Typography;
-
 export default function CustomerTestimonials() {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [slideDirection, setSlideDirection] = useState('');
-  const [prevIndex, setPrevIndex] = useState(0);
+  const [testimonials, setTestimonials] = useState([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
-  const [page, setPage] = useState(1);
+  const [slidesPerView, setSlidesPerView] = useState(2);
+  const swiperRef = useRef(null);
+  const [page] = useState(1);
 
   const { data: reviewData, isLoading } = useGetReviewsQuery(page);
-  const [testimonials, setTestimonials] = useState([]);
 
+  // Format API data
   useEffect(() => {
     if (reviewData?.data?.reviews) {
       const formattedReviews = reviewData.data.reviews.map(review => ({
-        name: review.clientEmail.split('@')[0],
+        name: review.clientEmail.split('@')[0].replace('.', ' ').split(' ').map(word =>
+          word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' '),
         rating: review.rating,
         text: review.comment,
         title: "Satisfied Client",
@@ -38,298 +37,231 @@ export default function CustomerTestimonials() {
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      setSlidesPerView(mobile ? 1 : 2);
     };
-    
+
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const canGoNext = () => {
-    if (isMobile) {
-      return testimonials.length > 1 && currentIndex < testimonials.length - 1;
-    } else {
-      return testimonials.length > 2 && currentIndex < testimonials.length - 2;
+  // Initialize Swiper manually using vanilla JavaScript
+  useEffect(() => {
+    if (testimonials.length > 0 && swiperRef.current) {
+      // Load Swiper CSS
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://cdnjs.cloudflare.com/ajax/libs/Swiper/8.4.5/swiper-bundle.min.css';
+      document.head.appendChild(link);
+
+      // Load Swiper JS
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/Swiper/8.4.5/swiper-bundle.min.js';
+      script.onload = () => {
+        if (window.Swiper) {
+          const swiper = new window.Swiper(swiperRef.current, {
+            slidesPerView: slidesPerView,
+            spaceBetween: 24,
+            loop: testimonials.length > slidesPerView,
+            speed: 600,
+            effect: 'slide',
+            allowTouchMove: true,
+            breakpoints: {
+              768: {
+                slidesPerView: 2,
+                spaceBetween: 24,
+              },
+              0: {
+                slidesPerView: 1,
+                spaceBetween: 16,
+              }
+            },
+            on: {
+              slideChange: function () {
+                setCurrentSlide(this.realIndex);
+              }
+            }
+          });
+
+          // Store swiper instance for navigation
+          swiperRef.current.swiper = swiper;
+        }
+      };
+      document.body.appendChild(script);
+
+      return () => {
+        if (swiperRef.current?.swiper) {
+          swiperRef.current.swiper.destroy();
+        }
+      };
+    }
+  }, [testimonials, slidesPerView]);
+
+  const handlePrev = () => {
+    if (swiperRef.current?.swiper) {
+      swiperRef.current.swiper.slidePrev();
+    }
+  };
+
+  const handleNext = () => {
+    if (swiperRef.current?.swiper) {
+      swiperRef.current.swiper.slideNext();
     }
   };
 
   const canGoPrev = () => {
-    return currentIndex > 0;
+    return currentSlide > 0 || testimonials.length > slidesPerView;
   };
 
-  const handlePrev = () => {
-    if (isAnimating || !canGoPrev()) return;
-    setPrevIndex(currentIndex);
-    setSlideDirection('right');
-    setIsAnimating(true);
-    setTimeout(() => {
-      setCurrentIndex((prev) => 
-        prev === 0 ? testimonials.length - (isMobile ? 1 : 2) : prev - (isMobile ? 1 : 2)
-      );
-    }, 300);
-  };
-
-  const handleNext = () => {
-    if (isAnimating || !canGoNext()) return;
-    setPrevIndex(currentIndex);
-    setSlideDirection('left');
-    setIsAnimating(true);
-    setTimeout(() => {
-      setCurrentIndex((prev) => 
-        prev >= testimonials.length - (isMobile ? 1 : 2) ? 0 : prev + (isMobile ? 1 : 2)
-      );
-    }, 300);
-  };
-
-  useEffect(() => {
-    if (isAnimating) {
-      const timer = setTimeout(() => {
-        setIsAnimating(false);
-      }, 600);
-      return () => clearTimeout(timer);
-    }
-  }, [isAnimating]);
-
-  const getVisibleTestimonials = () => {
-    if (testimonials.length === 0) return [];
-    if (isMobile) {
-      return [testimonials[currentIndex % testimonials.length]];
-    } else {
-      return [
-        testimonials[currentIndex % testimonials.length],
-        testimonials[(currentIndex + 1) % testimonials.length]
-      ].filter(Boolean);
-    }
-  };
-
-  const getPrevVisibleTestimonials = () => {
-    if (testimonials.length === 0) return [];
-    if (isMobile) {
-      return [testimonials[prevIndex % testimonials.length]];
-    } else {
-      return [
-        testimonials[prevIndex % testimonials.length],
-        testimonials[(prevIndex + 1) % testimonials.length]
-      ].filter(Boolean);
-    }
+  const canGoNext = () => {
+    return currentSlide < testimonials.length - slidesPerView || testimonials.length > slidesPerView;
   };
 
   const paginationDots = testimonials.map((_, index) => {
     let isActive;
     if (isMobile) {
-      isActive = index === currentIndex % testimonials.length;
+      isActive = index === currentSlide;
     } else {
-      isActive = index === currentIndex % testimonials.length || 
-                index === (currentIndex + 1) % testimonials.length;
+      isActive = index === currentSlide || index === currentSlide + 1;
     }
-    
+
     return (
       <div
         key={index}
+        className="w-2 h-2 rounded-full mx-1 transition-colors duration-300 cursor-pointer"
         style={{
-          width: 8,
-          height: 8,
-          borderRadius: '50%',
           backgroundColor: isActive ? '#52c41a' : '#d9d9d9',
-          margin: '0 4px',
-          transition: 'background-color 0.3s ease',
+        }}
+        onClick={() => {
+          if (swiperRef.current?.swiper) {
+            swiperRef.current.swiper.slideTo(index);
+          }
         }}
       />
     );
   });
 
-  if (isLoading && testimonials.length === 0) {
-    return <div>Loading reviews...</div>;
+  const StarRating = ({ rating }) => (
+    <div className="flex gap-0.5 text-yellow-400">
+      {[...Array(5)].map((_, i) => (
+        <svg key={i} className="w-4 h-4" fill={i < rating ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+        </svg>
+      ))}
+    </div>
+  );
+
+  const TestimonialCard = ({ testimonial }) => (
+    <div className="bg-white rounded-lg shadow-md hover:shadow-lg p-6 h-full transition-all duration-300">
+      <div className="flex items-start gap-4 mb-4">
+        <div
+          className="w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-md"
+          style={{ backgroundColor: testimonial.avatarColor }}
+        >
+          {testimonial.name.charAt(0)}
+        </div>
+        <div className="flex-1">
+          <StarRating rating={testimonial.rating} />
+          <h4 className="font-semibold mt-1 text-gray-900">{testimonial.name}</h4>
+          <p className="text-sm text-gray-500">{testimonial.title}</p>
+        </div>
+      </div>
+      <p className="text-gray-700 mb-3">{testimonial.text}</p>
+      <p className="text-xs text-gray-400">
+        {new Date(testimonial.createdAt).toLocaleDateString()}
+      </p>
+    </div>
+  );
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto pb-16 px-4">
+        <div className="text-center">Loading reviews...</div>
+      </div>
+    );
   }
 
   return (
-    <div className='container mx-auto pb-16 sm:px-0 px-2.5'>
-      <Space direction="vertical" size="large" style={{ width: '100%', textAlign: 'center' }}>
-        <Title level={2}>What our customers are saying about us</Title>
-        <Text type="secondary" style={{ display: 'block', marginBottom: 48 }}>
+    <div className="container mx-auto pb-16 px-4 max-w-7xl">
+      <div className="text-center mb-12">
+        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          What our customers are saying about us
+        </h2>
+        <p className="text-gray-600 max-w-2xl mx-auto">
           Here's what some of our happy clients have to say about their experience with us
-        </Text>
-      </Space>
+        </p>
+      </div>
 
-      <Row gutter={[24, 24]} align="middle">
-        <Col xs={24} md={8}>
-          <Space direction="vertical" size="middle">
-            <Title level={3}>What Clients Say About Us</Title>
-            <Paragraph type="secondary">
-              Discover authentic experiences and genuine feedback from our satisfied clients.
-            </Paragraph>
-            <Space>
-              <Button 
-                shape="circle" 
-                icon={<LeftOutlined />} 
-                onClick={handlePrev}
-                style={{ 
-                  borderColor: canGoPrev() ? '#52c41a' : '#d9d9d9', 
-                  color: canGoPrev() ? '#52c41a' : '#d9d9d9',
-                  transition: 'all 0.3s ease',
-                  boxShadow: isAnimating ? 'none' : canGoPrev() ? '0 2px 8px rgba(82, 196, 26, 0.15)' : 'none',
-                  transform: isAnimating ? 'scale(0.95)' : 'scale(1)',
-                  cursor: canGoPrev() ? 'pointer' : 'not-allowed'
-                }}
-                disabled={isAnimating || !canGoPrev()}
-              />
-              <Button 
-                shape="circle" 
-                icon={<RightOutlined />} 
-                onClick={handleNext}
-                style={{ 
-                  borderColor: canGoNext() ? '#52c41a' : '#d9d9d9', 
-                  color: canGoNext() ? '#52c41a' : '#d9d9d9',
-                  transition: 'all 0.3s ease',
-                  boxShadow: isAnimating ? 'none' : canGoNext() ? '0 2px 8px rgba(82, 196, 26, 0.15)' : 'none',
-                  transform: isAnimating ? 'scale(0.95)' : 'scale(1)',
-                  cursor: canGoNext() ? 'pointer' : 'not-allowed'
-                }}
-                disabled={isAnimating || !canGoNext()}
-              />
-            </Space>
-            
-            {testimonials.length > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
-                {paginationDots}
-              </div>
-            )}
-          </Space>
-        </Col>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Column - Controls */}
+        <div className="lg:col-span-4 text-center lg:text-left">
+          <h3 className="text-2xl font-bold text-gray-900 mb-4">
+            What Clients Say About Us
+          </h3>
+          <p className="text-gray-600 mb-6">
+            Discover authentic experiences and genuine feedback from our satisfied clients.
+          </p>
 
-        <Col xs={24} md={16}>
-          <div style={{ 
-            overflow: 'hidden', 
-            position: 'relative', 
-            borderRadius: 8,
-            height: '100%',
-            minHeight: 240
-          }}>
-            {isAnimating && (
-              <Row 
-                gutter={[16, 16]} 
-                style={{
-                  position: 'absolute',
-                  width: '100%',
-                  zIndex: 1,
-                  transition: 'all 0.5s cubic-bezier(0.645, 0.045, 0.355, 1)',
-                  transform: `translateX(${slideDirection === 'left' ? '-100%' : '100%'})`,
-                  opacity: 0
-                }}
-              >
-                {getPrevVisibleTestimonials().map((testimonial, index) => (
-                  <Col key={`prev-${index}`} xs={24} sm={24} md={12}>
-                    <Card 
-                      hoverable
-                      style={{
-                        height: '100%',
-                        transition: 'all 0.3s ease',
-                        transform: 'scale(0.98)',
-                      }}
-                    >
-                      <Space size="middle" align="start">
-                        <Avatar 
-                          size={64} 
-                          style={{ 
-                            backgroundColor: testimonial.avatarColor,
-                            color: '#fff',
-                            fontSize: 24,
-                            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)'
-                          }}
-                        >
-                          {testimonial.name.charAt(0)}
-                        </Avatar>
-                        <Space direction="vertical" size={4}>
-                          <Rate 
-                            disabled 
-                            value={testimonial.rating} 
-                            style={{ fontSize: 14 }} 
-                          />
-                          <Text strong>{testimonial.name}</Text>
-                          <Text type="secondary" style={{ fontSize: 12 }}>
-                            {testimonial.title}
-                          </Text>
-                        </Space>
-                      </Space>
-                      <Paragraph style={{ marginTop: 16 }}>
-                        {testimonial.text}
-                      </Paragraph>
-                      <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 8 }}>
-                        {new Date(testimonial.createdAt).toLocaleDateString()}
-                      </Text>
-                    </Card>
-                  </Col>
-                ))}
-              </Row>
-            )}
-
-            <Row 
-              gutter={[16, 16]} 
+          <div className="flex gap-3 justify-center lg:justify-start mb-6">
+            <button
+              onClick={handlePrev}
+              disabled={!canGoPrev()}
+              className="w-10 h-10 cursor-pointer rounded-full border-2 flex items-center justify-center transition-all duration-300 disabled:cursor-not-allowed hover:scale-105"
               style={{
-                position: 'relative',
-                zIndex: 2,
-                transition: 'all 0.5s cubic-bezier(0.645, 0.045, 0.355, 1)',
-                transform: isAnimating 
-                  ? `translateX(${slideDirection === 'left' ? '100%' : '-100%'})` 
-                  : 'translateX(0)',
-                opacity: isAnimating ? 0 : 1
+                borderColor: canGoPrev() ? '#52c41a' : '#d9d9d9',
+                color: canGoPrev() ? '#52c41a' : '#d9d9d9',
+                boxShadow: canGoPrev() ? '0 2px 8px rgba(82, 196, 26, 0.15)' : 'none',
               }}
             >
-              {getVisibleTestimonials().map((testimonial, index) => (
-                <Col key={index} xs={24} sm={24} md={12}>
-                  <Card 
-                    hoverable
-                    style={{
-                      height: '100%',
-                      transition: 'all 0.3s ease',
-                      transform: isAnimating ? 'scale(1.02)' : 'scale(1)',
-                      boxShadow: isAnimating ? '0 10px 20px rgba(0, 0, 0, 0.1)' : '0 4px 8px rgba(0, 0, 0, 0.05)'
-                    }}
-                  >
-                    <Space size="middle" align="start">
-                      <Avatar 
-                        size={64} 
-                        style={{ 
-                          backgroundColor: testimonial.avatarColor,
-                          color: '#fff',
-                          fontSize: 24,
-                          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)'
-                        }}
-                      >
-                        {testimonial.name.charAt(0)}
-                      </Avatar>
-                      <Space direction="vertical" size={4}>
-                        <Rate 
-                          disabled 
-                          value={testimonial.rating} 
-                          style={{ fontSize: 14 }} 
-                        />
-                        <Text strong>{testimonial.name}</Text>
-                        <Text type="secondary" style={{ fontSize: 12 }}>
-                          {testimonial.title}
-                        </Text>
-                      </Space>
-                    </Space>
-                    <Paragraph style={{ marginTop: 16 }}>
-                      {testimonial.text}
-                    </Paragraph>
-                    <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 8 }}>
-                      {new Date(testimonial.createdAt).toLocaleDateString()}
-                    </Text>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
 
-            {testimonials.length === 0 && !isLoading && (
-              <div style={{ textAlign: 'center', padding: 40 }}>
-                <Text type="secondary">No reviews available yet</Text>
-              </div>
-            )}
+            <button
+              onClick={handleNext}
+              disabled={!canGoNext()}
+              className="w-10 h-10 rounded-full cursor-pointer border-2 flex items-center justify-center transition-all duration-300 disabled:cursor-not-allowed hover:scale-105"
+              style={{
+                borderColor: canGoNext() ? '#52c41a' : '#d9d9d9',
+                color: canGoNext() ? '#52c41a' : '#d9d9d9',
+                boxShadow: canGoNext() ? '0 2px 8px rgba(82, 196, 26, 0.15)' : 'none',
+              }}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
           </div>
-        </Col>
-      </Row>
+
+          {/* Pagination Dots */}
+          <div className="flex justify-center lg:justify-start">
+            {paginationDots}
+          </div>
+        </div>
+
+        {/* Right Column - Swiper Testimonials */}
+        <div className="lg:col-span-8">
+          <div className="swiper" ref={swiperRef} style={{ minHeight: '250px', paddingTop: '50px' }}>
+            <div className="swiper-wrapper py-10 px-5 ">
+              {testimonials.map((testimonial, index) => (
+                <div key={index} className="swiper-slide">
+                  <TestimonialCard testimonial={testimonial} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Empty state */}
+          {testimonials.length === 0 && !isLoading && (
+            <div className="text-center py-10">
+              <p className="text-gray-500">No reviews available yet</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

@@ -46,7 +46,7 @@ const AppFooter = () => {
             <Title style={{ color: 'white' }} level={4} className="text-white mb-6">Quick Link</Title>
             <Space direction="vertical" size="middle">
               {/* <Link style={{color:'white'}} href="/partner" className="text-white hover:text-gray-300">Become a partner</Link> */}
-              <Link style={{ color: 'white' }} href="/terms-conditions" className="text-white hover:text-gray-300">Term & Condition</Link>
+              <Link style={{ color: 'white' }} href="/terms-conditions" className="text-white hover:text-gray-300">Term & Conditions</Link>
               <Link style={{ color: 'white' }} href="/privacy-policy" className="text-white hover:text-gray-300">Privacy Policy </Link>
               <Link style={{ color: 'white' }} href="/faq" className="text-white hover:text-gray-300">Faq</Link>
               <Link style={{ color: 'white' }} href="/fleet" className="text-white hover:text-gray-300">Fleet</Link>

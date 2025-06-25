@@ -1,9 +1,9 @@
 // pages/about.js
 "use client"
 import CustomBanner from '@/components/CustomBanner';
-import { Button, Card, Col, Row, Typography } from 'antd';
+import { Card, Col, Row, Typography } from 'antd';
 import Head from 'next/head';
-import { CiLocationOn } from "react-icons/ci";
+import Image from 'next/image';
 
 const { Title, Paragraph } = Typography;
 
@@ -38,9 +38,9 @@ export default function About() {
                 transportation options for personal events like weddings, birthdays and other
                 social outings and corporate events like conferences and business meetings.
               </Paragraph>
-              <Button type="primary" size="large" className="mt-4 bg-blue-600 hover:bg-blue-700">
+              <div type="primary" size="large" className="mt-4 bg-green-500 w-3/12 text-center py-3 rounded-lg text-white cursor-text">
                 COME SAY HELLO
-              </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -118,7 +118,7 @@ export default function About() {
             <Col xs={24} sm={12} md={6}>
               <Card className="text-center h-full border-0 shadow-md hover:shadow-lg transition-shadow">
                 <div className='bg-green-500 w-20 h-20 flex items-center justify-center rounded-full mx-auto'>
-                  <CiLocationOn className="text-4xl text-white" />
+                  <Image src={'/images/about/location.png'} width={25} height={25} alt={''} />
                 </div>
                 <Title level={5} className="font-bold mb-2 mt-4">MORE LOCATIONS</Title>
                 <Paragraph className="text-gray-600">
@@ -130,7 +130,7 @@ export default function About() {
             <Col xs={24} sm={12} md={6}>
               <Card className="text-center h-full border-0 shadow-md hover:shadow-lg transition-shadow">
                 <div className='bg-green-500 w-20 h-20 flex items-center justify-center rounded-full mx-auto'>
-                  <CiLocationOn className="text-4xl text-white" />
+                  <Image src={'/images/about/plan.png'} width={25} height={25} alt={''} />
                 </div>
                 <Title level={5} className="font-bold mb-2 mt-4">airport delivery</Title>
                 <Paragraph className="text-gray-600">
@@ -141,7 +141,7 @@ export default function About() {
             <Col xs={24} sm={12} md={6}>
               <Card className="text-center h-full border-0 shadow-md hover:shadow-lg transition-shadow">
                 <div className='bg-green-500 w-20 h-20 flex items-center justify-center rounded-full mx-auto'>
-                  <CiLocationOn className="text-4xl text-white" />
+                  <Image src={'/images/about/delevry.png'} width={25} height={25} alt={''} />
                 </div>
                 <Title level={5} className="font-bold mb-2 mt-4">curbside delivery</Title>
                 <Paragraph className="text-gray-600">
@@ -152,7 +152,7 @@ export default function About() {
             <Col xs={24} sm={12} md={6}>
               <Card className="text-center h-full border-0 shadow-md hover:shadow-lg transition-shadow">
                 <div className='bg-green-500 w-20 h-20 flex items-center justify-center rounded-full mx-auto'>
-                  <CiLocationOn className="text-4xl text-white" />
+                  <Image src={'/images/about/support.png'} width={25} height={25} alt={''} />
                 </div>
                 <Title level={5} className="font-bold mb-2 mt-4">24/7 support</Title>
                 <Paragraph className="text-gray-600">
