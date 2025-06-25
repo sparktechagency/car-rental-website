@@ -32,7 +32,7 @@ export default function ExploreVehicles() {
     setIsloading(true);
     try {
       // Get existing reservations from localStorage
-      const existingReservations = JSON.parse(localStorage.getItem('reservations')) || [];
+      const existingReservations = JSON.parse(localStorage.getItem('reservation')) || [];
 
       // Create new reservation object matching your structure
       const newReservation = {
@@ -68,10 +68,13 @@ export default function ExploreVehicles() {
       };
 
       // Add to existing reservations
-      const updatedReservations = [...existingReservations, newReservation];
+      const updatedArr = existingReservations.map(existReservation => {
+
+        return { ...existReservation, ...newReservation };
+      });
 
       // Save to localStorage
-      localStorage.setItem('reservation', JSON.stringify(updatedReservations));
+      localStorage.setItem('reservation', JSON.stringify(updatedArr));
 
       setTimeout(() => {
         setIsloading(false);

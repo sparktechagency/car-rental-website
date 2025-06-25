@@ -13,10 +13,19 @@ export const ContactApi = baseApi.injectEndpoints({
       }),
       providesTags: ["contact"],
     }),
+
+    contact: builder.query({
+      query: () => ({
+        url: `/company-cms/contact`,
+        method: "GET",
+      }),
+      providesTags: ["contact"],
+    }),
   }),
 });
 
 // Export hooks
 export const {
-  useCreatingContactMutation
+  useCreatingContactMutation,
+  useContactQuery
 } = ContactApi;

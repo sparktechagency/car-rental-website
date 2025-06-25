@@ -1,7 +1,7 @@
 "use client";
 
-import { PrinterOutlined } from '@ant-design/icons';
-import { Button, Card } from 'antd';
+import { CopyOutlined, PrinterOutlined } from '@ant-design/icons';
+import { Button, Card, message } from 'antd';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useGetBookingEmailAndIdQuery } from '../../features/Booking/BookingApi';
@@ -9,9 +9,6 @@ import { useGetBookingEmailAndIdQuery } from '../../features/Booking/BookingApi'
 const ReservationDetails = () => {
   const bookingId = useSearchParams().get("bookingId");
   const email = useSearchParams().get("clientEmail");
-
-
-
 
   const { data, isLoading, error } = useGetBookingEmailAndIdQuery(
     { referenceId: bookingId, email },
@@ -31,6 +28,11 @@ const ReservationDetails = () => {
   const formatTime = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    message.success('Reference ID copied to clipboard!');
   };
 
   const handlePrint = () => {
@@ -381,7 +383,16 @@ const ReservationDetails = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <p className="text-gray-500 text-sm">Reference ID</p>
-              <p className="font-medium">{bookingData?._id || 'N/A'}</p>
+              <div className="flex items-center gap-2">
+                <p className="font-medium">{bookingData?._id || 'N/A'}</p>
+                {bookingData?._id && (
+                  <Button
+                    icon={<CopyOutlined />}
+                    size="small"
+                    onClick={() => copyToClipboard(bookingData._id)}
+                  />
+                )}
+              </div>
             </div>
             <div>
               <p className="text-gray-500 text-sm">Created on</p>

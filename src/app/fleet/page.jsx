@@ -87,30 +87,33 @@ export default function Fleet() {
       // Remove the vehicle property from values since we're merging with the actual vehicle data
     };
 
-    const existingReservations =
-      JSON.parse(localStorage.getItem("reservation")) || [];
+    const existingReservations = JSON.parse(localStorage.getItem("reservation")) || [];
 
     // Check if a reservation with the same vehicle ID already exists
-    const existingIndex = existingReservations.findIndex(
-      (res) => res._id === selectedCar._id || res.id === selectedCar.id
-    );
+    // const existingIndex = existingReservations.findIndex(
+    //   (res) => res._id === selectedCar._id || res.id === selectedCar.id
+    // );
 
-    let updatedReservations;
-    if (existingIndex !== -1) {
-      // Update existing reservation
-      updatedReservations = [...existingReservations];
-      updatedReservations[existingIndex] = modifiedVehicleData;
-    } else {
-      // Add new reservation
-      updatedReservations = [...existingReservations, modifiedVehicleData];
-    }
+    // let updatedReservations;
+    // if (existingIndex !== -1) {
+    //   // Update existing reservation
+    //   updatedReservations = [...existingReservations];
+    //   updatedReservations[existingIndex] = modifiedVehicleData;
+    // } else {
+    //   // Add new reservation
+    //   updatedReservations = [...existingReservations, modifiedVehicleData];
+    // }
 
-    localStorage.setItem("reservation", JSON.stringify(updatedReservations));
+    const updatedArr = existingReservations.map(existReservation => {
 
+      return { ...existReservation, ...modifiedVehicleData };
+    });
 
+    localStorage.setItem("reservation", JSON.stringify(updatedArr));
+
+    setIsloading(false);
     // setIsModalOpen(false);
     setTimeout(() => {
-      setIsloading(false);
       router.push("/booking-extras");
     }, 1000);
   };
