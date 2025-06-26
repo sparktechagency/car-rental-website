@@ -58,7 +58,7 @@ export default function Frequently() {
   if (!faqItems.length) return <div className="text-center py-10">No FAQs available</div>;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:pt-10 pt-0 bg-white">
+    <div className="max-w-5xl mx-auto px-4 sm:pt-10 pt-4 bg-white">
       {/* FAQ Section */}
       <div className="mb-20">
         <h2 className="text-3xl font-bold text-center mb-3">Frequently Asked Questions</h2>

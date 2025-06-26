@@ -12,7 +12,7 @@ const Header = () => {
     <div className="bg-[#1A373A] text-white py-1.5 md:py-2 px-3 md:px-4">
       <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
         {/* Contact Info - optimized mobile layout */}
-        <div className="w-full md:w-auto grid grid-cols-2 md:flex md:flex-row md:space-x-6 gap-y-1 md:gap-y-0 mb-1 md:mb-0">
+        <div className="w-full md:w-auto grid grid-cols-2 md:flex md:flex-row md:space-x-6 space-x-0 gap-y-1 md:gap-y-0 mb-1 md:mb-0">
           <div
             className="flex items-center justify-center gap-1.5 md:gap-2 text-white hover:text-amber-400 text-[11px] xs:text-xs sm:text-sm md:text-base"
           >

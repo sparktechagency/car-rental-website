@@ -26,12 +26,32 @@ import {
 import PhoneInput from "antd-phone-input";
 import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { baseURL } from "../../../utils/BaseURL";
 import { useCreatingBookingMutation } from "../../features/reservation_page/reservationApi";
 
 const { Title } = Typography;
 const { Option } = Select;
+
+// Function to calculate days difference between two dates
+const calculateDaysDifference = (startDate, endDate) => {
+  if (!startDate || !endDate) return 1;
+
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  // Handle invalid dates
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return 1;
+
+  // Calculate difference in milliseconds
+  const diffTime = end - start;
+
+  // Convert to days and round up
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  // Return at least 1 day
+  return diffDays < 1 ? 1 : diffDays;
+};
 
 export default function Checkout() {
   const [createBooking, { isLoading }] = useCreatingBookingMutation();
@@ -42,11 +62,61 @@ export default function Checkout() {
   const [editType, setEditType] = useState(null); // 'pickup' or 'return'
   const [editDate, setEditDate] = useState(null);
   const [editTime, setEditTime] = useState(null);
+  const [reservation, setReservation] = useState([]);
+  const [daysDifference, setDaysDifference] = useState(1);
+  const [carRentalFee, setCarRentalFee] = useState(0);
+  const [extrasPrice, setExtrasPrice] = useState(0);
+  const [subtotal, setSubtotal] = useState(0);
+  const [vat, setVat] = useState(0);
+  const [total, setTotal] = useState(0);
 
-  // Get reservation data from localStorage
-  const reservationData =
-    typeof window !== "undefined" ? localStorage.getItem("reservation") : null;
-  const reservation = reservationData ? JSON.parse(reservationData) : [];
+  // Load reservation data from localStorage
+  useEffect(() => {
+    const reservationData = localStorage.getItem("reservation");
+    if (reservationData) {
+      const parsedReservation = JSON.parse(reservationData);
+      setReservation(parsedReservation);
+      calculatePrices(parsedReservation);
+    }
+  }, []);
+
+  const calculatePrices = (reservationData) => {
+    if (!reservationData || reservationData.length === 0) return;
+
+    const item = reservationData[0];
+    const days = calculateDaysDifference(item.pickupDate, item.returnDate);
+    setDaysDifference(days);
+
+    // Calculate car rental fee
+    const carFee = item.dailyRate * days;
+    setCarRentalFee(carFee);
+
+    // Calculate extras price
+    let extrasTotal = 0;
+    if (item.addedServices) {
+      for (const serviceId in item.addedServices) {
+        const service = item.addedServices[serviceId];
+        if (service?.added) {
+          if (service.isPerDay) {
+            extrasTotal += service.price * service.quantity * days;
+          } else {
+            extrasTotal += service.price * service.quantity;
+          }
+        }
+      }
+    }
+    setExtrasPrice(extrasTotal);
+
+    // Calculate subtotal, VAT, and total
+    const newSubtotal = carFee + extrasTotal;
+    setSubtotal(newSubtotal);
+
+    const newVat = newSubtotal * 0.075;
+    setVat(newVat);
+
+    const newTotal = newSubtotal + newVat;
+    setTotal(newTotal);
+  };
 
   if (!reservation || reservation.length === 0) {
     return (
@@ -71,19 +141,6 @@ export default function Checkout() {
   }
 
   const item = reservation[0];
-
-  // Calculate booking duration in days
-  const pickupDate = new Date(item.pickupDate);
-  const returnDate = new Date(item.returnDate);
-  const durationDays =
-    Math.ceil((returnDate - pickupDate) / (1000 * 60 * 60 * 24)) || 1;
-
-  // Calculate prices
-  const carRentalFee = item.dailyRate * durationDays;
-  const extrasPrice = item.extraCost || 0;
-  const subtotal = carRentalFee + extrasPrice;
-  const vat = subtotal * 0.075;
-  const total = subtotal + vat;
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -141,8 +198,9 @@ export default function Checkout() {
     }
 
     localStorage.setItem("reservation", JSON.stringify(updatedReservation));
+    setReservation(updatedReservation);
+    calculatePrices(updatedReservation);
     setIsModalOpen(false);
-    // window.location.reload(); // Refresh to show updated values
   };
 
   const handleCancel = () => {
@@ -210,6 +268,8 @@ export default function Checkout() {
   const onFinish = async (values) => {
     try {
       // Combine date and time
+      const pickupDate = new Date(item.pickupDate);
+      const returnDate = new Date(item.returnDate);
       const [pickupHours, pickupMinutes] = item.pickupTime.split(":");
       const [returnHours, returnMinutes] = item.returnTime.split(":");
 
@@ -385,8 +445,8 @@ export default function Checkout() {
             <div className="space-y-3">
               <div className="flex justify-between text-sm border-b border-gray-200 pb-3">
                 <span>
-                  Car rental fee ({durationDays} day
-                  {durationDays > 1 ? "s" : ""})
+                  Car rental fee ({daysDifference} day
+                  {daysDifference > 1 ? "s" : ""})
                 </span>
                 <span>₦{carRentalFee.toLocaleString()}</span>
               </div>

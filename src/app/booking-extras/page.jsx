@@ -52,6 +52,26 @@ const formatTime = (timeString) => {
   return `${hours}:${minutes.toString().padStart(2, "0")} ${ampm}`;
 };
 
+// Function to calculate days difference between two dates
+const calculateDaysDifference = (startDate, endDate) => {
+  if (!startDate || !endDate) return 1;
+
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  // Handle invalid dates
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return 1;
+
+  // Calculate difference in milliseconds
+  const diffTime = end - start;
+
+  // Convert to days and round up
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  // Return at least 1 day
+  return diffDays < 1 ? 1 : diffDays;
+};
+
 // Function to fetch location details
 const fetchLocationDetails = async (locationId) => {
   try {
@@ -84,30 +104,30 @@ const AddonCard = React.memo(
       const newAddState = !add;
       setAdd(newAddState);
       if (newAddState) {
-        onAddToggle(newAddState, price, count, title);
+        onAddToggle(newAddState, price, count, title, isPerDay);
       } else {
-        onAddToggle(newAddState, price, 0, title);
+        onAddToggle(newAddState, price, 0, title, isPerDay);
         setCount(1);
       }
-    }, [add, count, onAddToggle, price, title]);
+    }, [add, count, onAddToggle, price, title, isPerDay]);
 
     const increment = useCallback(() => {
       const newCount = count + 1;
       setCount(newCount);
       if (add) {
-        onAddToggle(true, price, newCount, title);
+        onAddToggle(true, price, newCount, title, isPerDay);
       }
-    }, [add, count, onAddToggle, price, title]);
+    }, [add, count, onAddToggle, price, title, isPerDay]);
 
     const decrement = useCallback(() => {
       if (count > 1) {
         const newCount = count - 1;
         setCount(newCount);
         if (add) {
-          onAddToggle(true, price, newCount, title);
+          onAddToggle(true, price, newCount, title, isPerDay);
         }
       }
-    }, [add, count, onAddToggle, price, title]);
+    }, [add, count, onAddToggle, price, title, isPerDay]);
 
     return (
       <div className="border border-gray-200 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 h-full flex flex-col">
@@ -134,7 +154,7 @@ const AddonCard = React.memo(
         <p className="text-sm text-gray-600 mb-4 flex-grow">{description}</p>
 
         <div className="mb-3">
-          <span className="text-xs text-gray-500">{isPerDay ? "Per Day" : "one-time" }</span>
+          <span className="text-xs text-gray-500">{isPerDay ? "Per Day" : "One-time"}</span>
           <p className="text-green-600 font-bold text-lg">
             {formatCurrency(price)}
           </p>
@@ -219,6 +239,7 @@ export default function BookingExtras() {
     cost: 0,
     items: {},
   });
+  const [daysDifference, setDaysDifference] = useState(1);
 
   // Load reservation data and fetch locations
   useEffect(() => {
@@ -243,6 +264,10 @@ export default function BookingExtras() {
 
         setReservation(parsedReservation);
         const vehicle = parsedReservation[0];
+
+        // Calculate days difference
+        const days = calculateDaysDifference(vehicle.pickupDate, vehicle.returnDate);
+        setDaysDifference(days);
 
         // Fetch location details
         if (vehicle.pickupLocationId) {
@@ -273,11 +298,20 @@ export default function BookingExtras() {
               typeof service.price === "number" &&
               typeof service.quantity === "number"
             ) {
+              let totalPrice = 0;
+
+              if (service.isPerDay) {
+                totalPrice = service.price * service.quantity * days;
+              } else {
+                totalPrice = service.price * service.quantity;
+              }
+
               calculatedCount += service.quantity;
-              calculatedCost += service.price * service.quantity;
+              calculatedCost += totalPrice;
               validServices[serviceId] = {
                 ...service,
-                totalPrice: service.price * service.quantity,
+                totalPrice,
+                isPerDay: service.isPerDay
               };
             }
           }
@@ -307,7 +341,7 @@ export default function BookingExtras() {
   } = useGetAllExtraServiceQuery();
 
   const handleExtraService = useCallback(
-    (isAdded, price, quantity, serviceName, serviceId) => {
+    (isAdded, price, quantity, serviceName, isPerDay, serviceId) => {
       setAddedServices((prev) => {
         let newCount = prev.count;
         let newCost = prev.cost;
@@ -320,8 +354,15 @@ export default function BookingExtras() {
             newCost -= newItems[serviceId].totalPrice;
           }
 
+          // Calculate total price based on service type
+          let totalPrice = 0;
+          if (isPerDay) {
+            totalPrice = price * quantity * daysDifference;
+          } else {
+            totalPrice = price * quantity;
+          }
+
           // Add new quantity
-          const totalPrice = price * quantity;
           newCount += quantity;
           newCost += totalPrice;
           newItems[serviceId] = {
@@ -330,6 +371,7 @@ export default function BookingExtras() {
             totalPrice,
             name: serviceName,
             added: true,
+            isPerDay
           };
         } else {
           // Remove service
@@ -359,7 +401,7 @@ export default function BookingExtras() {
         return { count: newCount, cost: newCost, items: newItems };
       });
     },
-    []
+    [daysDifference]
   );
 
   const handleContinueBooking = () => {
@@ -549,6 +591,7 @@ export default function BookingExtras() {
                     >
                       <span className="text-gray-700">
                         {service.name} × {service.quantity}
+                        {service.isPerDay && ` × ${daysDifference} days`}
                       </span>
                       <span className="text-green-500 font-semibold">
                         {formatCurrency(service.totalPrice)}
@@ -589,12 +632,13 @@ export default function BookingExtras() {
                     description={addon.description}
                     price={addon.cost}
                     isFree={addon.isFree}
-                    onAddToggle={(isAdded, price, quantity, serviceName) =>
+                    onAddToggle={(isAdded, price, quantity, serviceName, isPerDay) =>
                       handleExtraService(
                         isAdded,
                         price,
                         quantity,
                         serviceName,
+                        isPerDay,
                         addon._id
                       )
                     }
