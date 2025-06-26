@@ -89,7 +89,8 @@ export default function Frequently() {
               type="text"
               onClick={() => setShowAll(!showAll)}
               className="flex items-center text-blue-500 hover:text-blue-700 font-medium"
-              icon={showAll ? <UpOutlined /> : <DownOutlined />}
+              style={{ backgroundColor: "#F2AF1E", fontWeight: "bold", width: "150px" }}
+            // icon={showAll ? <UpOutlined /> : <DownOutlined />}
             >
               {showAll ? 'Show Less' : 'View More'}
             </Button>

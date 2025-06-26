@@ -23,7 +23,7 @@ export default function About() {
         ]}
       />
 
-      <div className="max-w-[1920px] mx-auto px-4 py-8 sm:px-6 md:px-8 lg:px-12 xl:px-16">
+      <div className="container mx-auto px-4 py-8 sm:px-6 md:px-8 lg:px-12 xl:px-16 sm:pt-20 pt-0">
         {/* Hero Section */}
         <div className="w-full mb-12 md:mb-16 lg:mb-20">
           <div className="flex flex-col lg:flex-row items-center gap-6 md:gap-8 lg:gap-12">
@@ -58,7 +58,7 @@ export default function About() {
         <div className="mb-12 md:mb-16 lg:mb-20">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-12 md:mb-16">
             {/* First car image */}
-            <div className="relative overflow-hidden rounded-lg shadow-lg aspect-[4/3]">
+            <div className="relative overflow-hidden rounded-lg shadow-lg ">
               <img
                 src="/images/aboutPage2.png"
                 alt="Luxury Mercedes G-Class"
@@ -74,9 +74,9 @@ export default function About() {
             </div>
 
             {/* Second car image */}
-            <div className="relative overflow-hidden rounded-lg shadow-lg aspect-[4/3]">
+            <div className="relative overflow-hidden rounded-lg shadow-lg ">
               <img
-                src="/images/aboutPage2.png"
+                src="/images/about/man.png"
                 alt="Luxury Porsche Cayenne"
                 className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                 loading="lazy"
@@ -92,7 +92,7 @@ export default function About() {
             {/* Third column with split content */}
             <div className="flex flex-col gap-4 md:gap-6">
               {/* 10 Years banner */}
-              <div className="bg-green-500 rounded-lg p-4 md:p-6 flex items-center justify-center shadow-lg h-full min-h-[120px] md:min-h-[150px]">
+              <div className="bg-green-500 rounded-lg p-4 md:p-6 flex items-center justify-center shadow-lg">
                 <div className="text-white text-center">
                   <div className="flex items-baseline justify-center">
                     <span className="text-4xl sm:text-5xl md:text-6xl font-bold">10</span>
