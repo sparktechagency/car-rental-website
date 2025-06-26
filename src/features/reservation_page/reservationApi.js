@@ -37,10 +37,8 @@ export const ReservationApi = baseApi.injectEndpoints({
       providesTags: ["reservation"],
     }),
 
-
-
-
   }),
+  overrideExisting: false,
 });
 
 // Export hooks

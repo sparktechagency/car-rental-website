@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
 import { baseURL } from "../../../utils/BaseURL";
 import { useGetAllExtraServiceQuery } from "../../features/reservation_page/reservationApi";
+import CustomLoading from '../../components/CustomLoading';
 
 // Utility functions
 const formatCurrency = (amount) => {
@@ -415,8 +416,8 @@ export default function BookingExtras() {
 
   if (!isClient || loading) {
     return (
-      <div className="h-[300px] w-full flex justify-center items-center">
-        <Spin size='default' />
+      <div className="">
+        <CustomLoading />
       </div>
     );
   }

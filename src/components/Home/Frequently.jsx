@@ -1,7 +1,7 @@
 "use client";
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { Button, Collapse } from 'antd';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { useGetFAQQuery } from '../../features/Home_page/HomeApi';
 
@@ -34,7 +34,7 @@ export default function Frequently() {
     if (faqRef.current) {
       setHeight(faqRef.current.clientHeight);
     }
-  }, [faqItems]); // Add faqItems as dependency to recalculate when data loads
+  }, [faqItems, showAll]); // Add showAll to dependencies to recalculate when toggling
 
   // Display all FAQs or just the first 5
   const displayFaqs = showAll ? faqItems : faqItems.slice(0, 5);
@@ -44,13 +44,6 @@ export default function Frequently() {
     return activeKey.includes(key)
       ? 'border-l-4 border-green-500 bg-gray-50 transition-all duration-300'
       : 'border-l-4 border-transparent transition-all duration-300';
-  };
-
-  // Animation variants for the button
-  const buttonVariants = {
-    initial: { scale: 1 },
-    tap: { scale: 0.95 },
-    hover: { scale: 1.05 }
   };
 
   if (isLoading) return <div className="text-center py-10">Loading FAQs...</div>;
@@ -91,59 +84,15 @@ export default function Frequently() {
         </div>
 
         {faqItems.length > 5 && (
-          <div className="flex justify-center mt-8">
-            <motion.div
-              initial="initial"
-              whileHover="hover"
-              whileTap="tap"
-              variants={buttonVariants}
-              transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+          <div className="flex justify-center mt-4">
+            <Button
+              type="text"
+              onClick={() => setShowAll(!showAll)}
+              className="flex items-center text-blue-500 hover:text-blue-700 font-medium"
+              icon={showAll ? <UpOutlined /> : <DownOutlined />}
             >
-              <Button
-                onClick={() => {
-                  setShowAll(!showAll);
-                  // Smooth scroll to bottom when showing more
-                  if (!showAll) {
-                    setTimeout(() => {
-                      window.scrollTo({
-                        top: faqRef.current.offsetTop + faqRef.current.clientHeight - window.innerHeight + 200,
-                        behavior: 'smooth'
-                      });
-                    }, 300);
-                  }
-                }}
-                className="bg-yellow-500 hover:bg-yellow-600 text-black font-medium px-8 py-3 h-auto rounded-md shadow-md transition-all duration-300 flex items-center"
-              >
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={showAll ? 'less' : 'more'}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    {showAll ? 'Show Less' : 'View More'}
-                  </motion.span>
-                </AnimatePresence>
-                {showAll ? (
-                  <motion.div
-                    initial={{ rotate: 0 }}
-                    animate={{ rotate: 180 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <UpOutlined className="ml-2" />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    initial={{ rotate: 0 }}
-                    animate={{ rotate: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <DownOutlined className="ml-2" />
-                  </motion.div>
-                )}
-              </Button>
-            </motion.div>
+              {showAll ? 'Show Less' : 'View More'}
+            </Button>
           </div>
         )}
       </div>

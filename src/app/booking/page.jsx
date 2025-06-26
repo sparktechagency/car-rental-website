@@ -1,17 +1,19 @@
 "use client";
 import CustomBanner from '@/components/CustomBanner';
-import { Button, Form, Input, Typography, message } from 'antd';
+import { Button, Form, Input, Typography, App } from 'antd';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useGetBookingEmailAndIdQuery } from '../../features/Booking/BookingApi';
 
 const { Title } = Typography;
+const { useApp } = App;
 
 export default function ReservationPage() {
   const [form] = Form.useForm();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState({});
+  const { message } = useApp(); // Get message from App context
   const { data: bookingData, isLoading, error } = useGetBookingEmailAndIdQuery(data, { skip: !data.email || !data.referenceId });
 
   // Handle API response
@@ -31,7 +33,7 @@ export default function ReservationPage() {
       message.error('Not found please try again');
       setLoading(false);
     }
-  }, [bookingData, error, data, router]);
+  }, [bookingData, error, data, router, message]); // Add message to dependencies
 
   const handleSubmit = (values) => {
     setLoading(true);

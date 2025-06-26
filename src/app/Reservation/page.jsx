@@ -11,7 +11,6 @@ import {
   Card,
   Checkbox,
   Collapse,
-  Empty,
   Radio,
   Rate,
   Slider,
@@ -22,8 +21,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { baseURL } from '../../../utils/BaseURL';
 import { useGetAllVehiclesQuery, useSeatDoorLuggageBrandsQuery } from '../../features/reservation_page/reservationApi';
-
-const { Panel } = Collapse;
 
 export default function CarRental() {
   const [reservation, setReservation] = useState([]);
@@ -47,7 +44,6 @@ export default function CarRental() {
   const router = useRouter();
 
   useEffect(() => {
-    // Only access localStorage on client side
     if (typeof window !== 'undefined') {
       const reservationData = localStorage.getItem("reservation");
       if (reservationData) {
@@ -56,35 +52,28 @@ export default function CarRental() {
     }
   }, []);
 
-  // Apply filters to the data
   const filteredVehicles = data?.data?.result?.filter(vehicle => {
-    // Transmission filter
     if (filters.transmission &&
       vehicle.transmissionType.toLowerCase() !== filters.transmission.toLowerCase()) {
       return false;
     }
 
-    // Seats filter
     if (filters.seats > 0 && vehicle.noOfSeats < filters.seats) {
       return false;
     }
 
-    // Price filter
     if (vehicle.dailyRate < filters.priceRange[0] || vehicle.dailyRate > filters.priceRange[1]) {
       return false;
     }
 
-    // Doors filter
     if (filters.doors > 0 && vehicle.noOfDoors < filters.doors) {
       return false;
     }
 
-    // Luggage filter
     if (filters.luggage > 0 && vehicle.noOfLuggages < filters.luggage) {
       return false;
     }
 
-    // Brands filter
     if (filters.brands.length > 0 && !filters.brands.includes(vehicle.brand)) {
       return false;
     }
@@ -175,10 +164,8 @@ export default function CarRental() {
     return `${hours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
   };
 
-  // Calculate total pages from API meta data
   const totalPages = data?.data?.meta?.totalPage || 1;
 
-  // Get unique sorted values for filters
   const seatOptions = seatDoorLuggageBrands?.data?.seatCounts
     ? [...new Set(seatDoorLuggageBrands.data.seatCounts)].sort((a, b) => a - b)
     : [4, 5, 7];
@@ -189,7 +176,7 @@ export default function CarRental() {
 
   const luggageOptions = seatDoorLuggageBrands?.data?.luggageCounts
     ? [...new Set(seatDoorLuggageBrands.data.luggageCounts)]
-      .filter(num => num !== 0) // This removes 0
+      .filter(num => num !== 0)
       .sort((a, b) => a - b)
     : [4, 6, 7, 8, 40];
 
@@ -198,6 +185,141 @@ export default function CarRental() {
     : ["Ford", "Forida", "Forida Apa", "Toyota", "Toyota7"];
 
   const currentVehicle = reservation.length > 0 ? reservation[0] : {};
+
+  // Collapse items configuration
+  const collapseItems = [
+    {
+      key: 'price',
+      label: 'Price Range',
+      children: (
+        <>
+          <Slider
+            range
+            min={0}
+            max={1000}
+            value={filters.priceRange}
+            onChange={handlePriceChange}
+            trackStyle={[{ backgroundColor: "#10B981" }]}
+            handleStyle={[
+              { borderColor: "#10B981", backgroundColor: "#10B981" },
+              { borderColor: "#10B981", backgroundColor: "#10B981" }
+            ]}
+          />
+          <div className="flex justify-between mt-2">
+            <span>₦{filters.priceRange[0]}</span>
+            <span>₦{filters.priceRange[1]}</span>
+          </div>
+        </>
+      ),
+      className: 'filter-panel'
+    },
+    {
+      key: 'transmission',
+      label: 'Transmission Type',
+      children: (
+        <Radio.Group
+          onChange={handleTransmissionChange}
+          value={filters.transmission}
+        >
+          <Radio value="" className="block mb-2">All</Radio>
+          <Radio value="automatic" className="block mb-2">Automatic</Radio>
+          <Radio value="manual" className="block">Manual</Radio>
+        </Radio.Group>
+      ),
+      className: 'filter-panel'
+    },
+    {
+      key: 'seats',
+      label: 'Seats Required',
+      children: (
+        <div className="grid grid-cols-3 gap-3">
+          <div
+            className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.seats === 0 ? "border border-green-500 text-green-500" : "border border-gray-300"}`}
+            onClick={() => handleSeatsChange(0)}
+          >
+            All
+          </div>
+          {seatOptions.map((num) => (
+            <div
+              key={num}
+              className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.seats === num ? "border border-green-500 text-green-500" : "border border-gray-300"}`}
+              onClick={() => handleSeatsChange(num)}
+            >
+              {num}
+            </div>
+          ))}
+        </div>
+      ),
+      className: 'filter-panel'
+    },
+    {
+      key: 'doors',
+      label: 'Doors Required',
+      children: (
+        <div className="grid grid-cols-3 gap-3">
+          <div
+            className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.doors === 0 ? "border border-green-500 text-green-500" : "border border-gray-300"}`}
+            onClick={() => handleDoorsChange(0)}
+          >
+            All
+          </div>
+          {doorOptions.map((num) => (
+            <div
+              key={num}
+              className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.doors === num ? "border border-green-500 text-green-500" : "border border-gray-300"}`}
+              onClick={() => handleDoorsChange(num)}
+            >
+              {num}
+            </div>
+          ))}
+        </div>
+      ),
+      className: 'filter-panel'
+    },
+    {
+      key: 'luggage',
+      label: 'Luggage Capacity',
+      children: (
+        <div className="grid grid-cols-3 gap-3">
+          <div
+            className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.luggage === 0 ? "border border-green-500 text-green-500" : "border border-gray-300"}`}
+            onClick={() => handleLuggageChange(0)}
+          >
+            All
+          </div>
+          {luggageOptions.map((num) => (
+            <div
+              key={num}
+              className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.luggage === num ? "border border-green-500 text-green-500" : "border border-gray-300"}`}
+              onClick={() => handleLuggageChange(num)}
+            >
+              {num === 0 ? null : num}
+            </div>
+          ))}
+        </div>
+      ),
+      className: 'filter-panel'
+    },
+    {
+      key: 'brands',
+      label: 'Brands',
+      children: (
+        <div className="space-y-2">
+          {brandOptions.map((brand) => (
+            <div
+              key={brand}
+              className="flex items-center cursor-pointer gap-2"
+              onClick={() => handleBrandChange(brand)}
+            >
+              <Checkbox checked={filters.brands.includes(brand)} className="mr-2" />
+              <span>{brand}</span>
+            </div>
+          ))}
+        </div>
+      ),
+      className: 'filter-panel'
+    }
+  ];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -274,126 +396,10 @@ export default function CarRental() {
             </div>
 
             <Collapse
+              items={collapseItems}
               bordered={false}
               defaultActiveKey={["price", "transmission", "seats", "doors", "luggage", "brands"]}
-            >
-              {/* Price Filter */}
-              <Panel header="Price Range" key="price" className="filter-panel">
-                <Slider
-                  range
-                  min={0}
-                  max={1000}
-                  value={filters.priceRange}
-                  onChange={handlePriceChange}
-                  trackStyle={[{ backgroundColor: "#10B981" }]}
-                  handleStyle={[
-                    { borderColor: "#10B981", backgroundColor: "#10B981" },
-                    { borderColor: "#10B981", backgroundColor: "#10B981" }
-                  ]}
-                />
-                <div className="flex justify-between mt-2">
-                  <span>₦{filters.priceRange[0]}</span>
-                  <span>₦{filters.priceRange[1]}</span>
-                </div>
-              </Panel>
-
-              {/* Transmission Filter */}
-              <Panel header="Transmission Type" key="transmission" className="filter-panel">
-                <Radio.Group
-                  onChange={handleTransmissionChange}
-                  value={filters.transmission}
-                >
-                  <Radio value="" className="block mb-2">All</Radio>
-                  <Radio value="automatic" className="block mb-2">Automatic</Radio>
-                  <Radio value="manual" className="block">Manual</Radio>
-                </Radio.Group>
-              </Panel>
-
-              {/* Seats Filter */}
-              <Panel header="Seats Required" key="seats" className="filter-panel">
-                <div className="grid grid-cols-3 gap-3">
-                  <div
-                    className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.seats === 0 ? "border border-green-500 text-green-500" : "border border-gray-300"
-                      }`}
-                    onClick={() => handleSeatsChange(0)}
-                  >
-                    All
-                  </div>
-                  {seatOptions.map((num) => (
-                    <div
-                      key={num}
-                      className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.seats === num ? "border border-green-500 text-green-500" : "border border-gray-300"
-                        }`}
-                      onClick={() => handleSeatsChange(num)}
-                    >
-                      {num}
-                    </div>
-                  ))}
-                </div>
-              </Panel>
-
-              {/* Doors Filter */}
-              <Panel header="Doors Required" key="doors" className="filter-panel">
-                <div className="grid grid-cols-3 gap-3">
-                  <div
-                    className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.doors === 0 ? "border border-green-500 text-green-500" : "border border-gray-300"
-                      }`}
-                    onClick={() => handleDoorsChange(0)}
-                  >
-                    All
-                  </div>
-                  {doorOptions.map((num) => (
-                    <div
-                      key={num}
-                      className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.doors === num ? "border border-green-500 text-green-500" : "border border-gray-300"
-                        }`}
-                      onClick={() => handleDoorsChange(num)}
-                    >
-                      {num}
-                    </div>
-                  ))}
-                </div>
-              </Panel>
-
-              {/* Luggage Filter */}
-              <Panel header="Luggage Capacity" key="luggage" className="filter-panel">
-                <div className="grid grid-cols-3 gap-3">
-                  <div
-                    className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.luggage === 0 ? "border border-green-500 text-green-500" : "border border-gray-300"
-                      }`}
-                    onClick={() => handleLuggageChange(0)}
-                  >
-                    All
-                  </div>
-                  {luggageOptions.map((num) => (
-                    <div
-                      key={num}
-                      className={`flex justify-center items-center py-2 cursor-pointer text-center ${filters.luggage === num ? "border border-green-500 text-green-500" : "border border-gray-300"
-                        }`}
-                      onClick={() => handleLuggageChange(num)}
-                    >
-                      {num === 0 ? null : num}
-                    </div>
-                  ))}
-                </div>
-              </Panel>
-
-              {/* Brands Filter */}
-              <Panel header="Brands" key="brands" className="filter-panel">
-                <div className="space-y-2">
-                  {brandOptions.map((brand) => (
-                    <div
-                      key={brand}
-                      className="flex items-center cursor-pointer gap-2"
-                      onClick={() => handleBrandChange(brand)}
-                    >
-                      <Checkbox checked={filters.brands.includes(brand)} className="mr-2" />
-                      <span>{brand}</span>
-                    </div>
-                  ))}
-                </div>
-              </Panel>
-            </Collapse>
+            />
           </div>
         </div>
 
@@ -408,8 +414,14 @@ export default function CarRental() {
               <p>Error loading vehicles. Please try again.</p>
             </div>
           ) : filteredVehicles.length === 0 ? (
-            <div className="flex justify-center items-center h-64">
-              <Empty description="No vehicles found matching your criteria" />
+            <div className="flex flex-col justify-center items-center h-64">
+              <div className="mb-4">
+                <CarOutlined className="text-6xl text-gray-300" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-600 mb-2">No Cars Available</h3>
+              <p className="text-gray-500 text-center max-w-md">
+                We couldn't find any vehicles matching your criteria. Try adjusting your filters or search terms.
+              </p>
             </div>
           ) : (
             <>

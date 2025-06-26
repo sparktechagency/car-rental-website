@@ -28,6 +28,7 @@ import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { baseURL } from "../../../utils/BaseURL";
+import CustomLoading from '../../components/CustomLoading';
 import { useCreatingBookingMutation } from "../../features/reservation_page/reservationApi";
 
 const { Title } = Typography;
@@ -37,20 +38,18 @@ const { Option } = Select;
 const calculateDaysDifference = (startDate, endDate) => {
   if (!startDate || !endDate) return 1;
 
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+  // Parse dates using dayjs to ensure consistency
+  const start = dayjs(startDate).startOf('day');
+  const end = dayjs(endDate).startOf('day');
 
   // Handle invalid dates
-  if (isNaN(start.getTime()) || isNaN(end.getTime())) return 1;
+  if (!start.isValid() || !end.isValid()) return 1;
 
-  // Calculate difference in milliseconds
-  const diffTime = end - start;
+  // Calculate difference in days
+  const diffDays = end.diff(start, 'day');
 
-  // Convert to days and round up
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-  // Return at least 1 day
-  return diffDays < 1 ? 1 : diffDays;
+  // Return at least 1 day, but add 1 to include both start and end dates
+  return diffDays < 1 ? 1 : diffDays + 1;
 };
 
 export default function Checkout() {
@@ -118,24 +117,10 @@ export default function Checkout() {
     setTotal(newTotal);
   };
 
-  if (!reservation || reservation.length === 0) {
+  if (reservation.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-8 text-center">
-        {contextHolder}
-        <div className="bg-white p-8 rounded-lg shadow">
-          <h2 className="text-2xl font-bold mb-4">No Reservation Found</h2>
-          <p className="mb-6">
-            It seems you don't have any active reservations. Please start a new
-            reservation.
-          </p>
-          <Button
-            type="primary"
-            onClick={() => router.push("/")}
-            className="bg-green-500"
-          >
-            Back to Home
-          </Button>
-        </div>
+      <div>
+        <CustomLoading />
       </div>
     );
   }
@@ -143,19 +128,18 @@ export default function Checkout() {
   const item = reservation[0];
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return dateString;
-    return date.toLocaleDateString("en-GB");
+    // Use dayjs for consistent date formatting
+    const date = dayjs(dateString);
+    if (!date.isValid()) return dateString;
+    return date.format('DD/MM/YYYY');
   };
 
   const formatTime = (timeString) => {
     if (!timeString) return "";
-    const time = new Date(`2000-01-01T${timeString}`);
-    if (isNaN(time.getTime())) return timeString;
-    return time.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    // Use dayjs for consistent time formatting
+    const time = dayjs(timeString, 'HH:mm');
+    if (!time.isValid()) return timeString;
+    return time.format('HH:mm');
   };
 
   const showModal = (type) => {
@@ -265,19 +249,25 @@ export default function Checkout() {
     };
   };
 
+  // Custom validation function for phone number
+  const validatePhoneNumber = (_, value) => {
+    if (!value || (!value.countryCode && !value.phoneNumber)) {
+      return Promise.reject(new Error('Phone number is required'));
+    }
+    if (!value.phoneNumber || value.phoneNumber.trim() === '') {
+      return Promise.reject(new Error('Phone number is required'));
+    }
+    return Promise.resolve();
+  };
+
   const onFinish = async (values) => {
     try {
-      // Combine date and time
-      const pickupDate = new Date(item.pickupDate);
-      const returnDate = new Date(item.returnDate);
-      const [pickupHours, pickupMinutes] = item.pickupTime.split(":");
-      const [returnHours, returnMinutes] = item.returnTime.split(":");
+      // Combine date and time using dayjs for consistency
+      const pickupDateTime = dayjs(item.pickupDate).hour(dayjs(item.pickupTime, 'HH:mm').hour()).minute(dayjs(item.pickupTime, 'HH:mm').minute());
+      const returnDateTime = dayjs(item.returnDate).hour(dayjs(item.returnTime, 'HH:mm').hour()).minute(dayjs(item.returnTime, 'HH:mm').minute());
 
-      pickupDate.setHours(pickupHours, pickupMinutes);
-      returnDate.setHours(returnHours, returnMinutes);
-
-      if (pickupDate >= returnDate) {
-        messageApi.error("Return date must be after pickup date");
+      if (pickupDateTime.isAfter(returnDateTime) || pickupDateTime.isSame(returnDateTime)) {
+        messageApi.error("Return date and time must be after pickup date and time");
         return;
       }
 
@@ -299,11 +289,11 @@ export default function Checkout() {
 
       // Build payload
       const bookingPayload = {
-        pickupDate: pickupDate.toISOString(),
-        pickupTime: pickupDate.toISOString(),
+        pickupDate: pickupDateTime.toISOString(),
+        pickupTime: pickupDateTime.toISOString(),
         pickupLocation: item.pickupLocationId,
-        returnDate: returnDate.toISOString(),
-        returnTime: returnDate.toISOString(),
+        returnDate: returnDateTime.toISOString(),
+        returnTime: returnDateTime.toISOString(),
         returnLocation: item.returnLocationId,
         vehicle: item._id,
         extraServices,
@@ -484,7 +474,10 @@ export default function Checkout() {
             layout="vertical"
             onFinish={onFinish}
             requiredMark={false}
-            initialValues={{ paymentMethod: "stripe" }}
+            initialValues={{
+              paymentMethod: "STRIPE",
+              phone: { countryCode: "234" } // Setting initial value for phone with Nigeria country code
+            }}
           >
             {/* Personal Details Section */}
             <div className="mb-6">
@@ -523,11 +516,11 @@ export default function Checkout() {
                   <Form.Item
                     name="phone"
                     label="Phone Number"
-                    rules={[{ required: true }]}
+                    rules={[{ validator: validatePhoneNumber }]}
                   >
                     <PhoneInput
                       enableSearch
-                      defaultCountry="ng"
+                      country="ng"
                       placeholder="Enter your phone number"
                     />
                   </Form.Item>
@@ -605,6 +598,7 @@ export default function Checkout() {
                 <Form.Item name="paymentMethod" rules={[{ required: true }]}>
                   <Select placeholder="Select Payment Method">
                     <Option value="STRIPE">STRIPE</Option>
+                    <Option value="BANK">BANK</Option>
                   </Select>
                 </Form.Item>
               </div>

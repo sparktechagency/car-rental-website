@@ -10,6 +10,7 @@ const ReservationDetails = () => {
   const bookingId = useSearchParams().get("bookingId");
   const email = useSearchParams().get("clientEmail");
 
+
   const { data, isLoading, error } = useGetBookingEmailAndIdQuery(
     { referenceId: bookingId, email },
     {

@@ -184,7 +184,7 @@ export default function CustomerTestimonials() {
   }
 
   return (
-    <div className="container mx-auto pb-16 px-4 max-w-7xl">
+    <div className="container mx-auto pb-16 px-4 flex flex-col gap-7 sm:pt-10 pt-0">
       <div className="text-center mb-12">
         <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
           What our customers are saying about us
@@ -244,8 +244,8 @@ export default function CustomerTestimonials() {
 
         {/* Right Column - Swiper Testimonials */}
         <div className="lg:col-span-8">
-          <div className="swiper" ref={swiperRef} style={{ minHeight: '250px', paddingTop: '50px' }}>
-            <div className="swiper-wrapper py-10 px-5 ">
+          <div className="swiper" ref={swiperRef} style={{ minHeight: '250px' }}>
+            <div className="swiper-wrapper  px-5 ">
               {testimonials.map((testimonial, index) => (
                 <div key={index} className="swiper-slide">
                   <TestimonialCard testimonial={testimonial} />
