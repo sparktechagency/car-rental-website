@@ -1,5 +1,3 @@
-// components/ContactHeader.jsx
-"use client";
 import Link from 'next/link';
 import { CallIcons, EmailIcons, FaceBookLogo, InstraGramLogo, WhatsApp } from '../../utils/svgImage';
 import { useContactQuery } from '../features/ContactApi';
@@ -8,6 +6,11 @@ import { useGetFAQQuery } from '../features/Home_page/HomeApi';
 const Header = () => {
   const { data: faq, isLoading } = useGetFAQQuery();
   const { data, isLoading: isContactDataLoading } = useContactQuery();
+
+  // Ensure URLs are defined, fallback to '#' if not available
+  const facebookUrl = isContactDataLoading ? '#' : data?.data?.facebook || '#';
+  const instagramUrl = isContactDataLoading ? '#' : data?.data?.instagram || '#';
+
   return (
     <div className="bg-[#1A373A] text-white py-1.5 md:py-2 px-3 md:px-4">
       <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
@@ -38,7 +41,7 @@ const Header = () => {
         {/* Social Icons - better mobile alignment */}
         <div className="w-full md:w-auto flex justify-center md:justify-end mt-1 md:mt-0 space-x-3 md:space-x-1">
           <Link
-            href={isContactDataLoading ? 'Loading...' : data?.data.facebook}
+            href={facebookUrl}
             className="text-white hover:text-amber-400 flex items-center"
             aria-label="Facebook"
             target='_blank'
@@ -49,7 +52,7 @@ const Header = () => {
           </Link>
 
           <Link
-            href={isContactDataLoading ? 'Loading...' : data?.data.instagram}
+            href={instagramUrl}
             className="text-white hover:text-amber-400 flex items-center"
             aria-label="Instagram"
             target='_blank'

@@ -254,7 +254,7 @@ const ReservationModal = ({
     }
 
     if (pickupDate && pickupTime && isPickupInPast(pickupDate, pickupTime)) {
-      newErrors.pickupTime = "Pickup must be 1+ minutes ahead";
+      newErrors.pickupTime = "Pickup must be 10+ minutes ahead";
       valid = false;
     }
 

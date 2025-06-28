@@ -1,8 +1,9 @@
 "use client";
 import CustomBanner from '@/components/CustomBanner';
-import { Button, Form, Input, Typography, App } from 'antd';
+import { App, Button, Form, Input, Typography } from 'antd';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
 import { useGetBookingEmailAndIdQuery } from '../../features/Booking/BookingApi';
 
 const { Title } = Typography;
@@ -24,7 +25,7 @@ export default function ReservationPage() {
         setLoading(false);
       } else if (bookingData.success === true) {
         router.push(`/reservationdetails?bookingId=${data.referenceId}&clientEmail=${data.email}`);
-        message.success('Booking details retrieved successfully');
+        toast.success('Booking details retrieved successfully');
         setLoading(false);
       }
     }
@@ -50,7 +51,7 @@ export default function ReservationPage() {
           { label: "Booking", href: "/booking" }
         ]}
       />
-      
+
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 lg:py-16">
         <div className="flex justify-center items-center">
           <div className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl xl:max-w-3xl bg-white rounded-lg shadow-sm p-6 sm:p-8 md:p-10">

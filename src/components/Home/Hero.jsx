@@ -157,7 +157,7 @@ const Hero = () => {
       isPickupTooEarly(formData.pickupDate, time)
     ) {
       setErrors({
-        pickupTime: "Pickup must be 1+ minutes ahead",
+        pickupTime: "Pickup must be 10+ minutes ahead",
       });
       return;
     }
@@ -187,7 +187,7 @@ const Hero = () => {
 
     if (pickupDate && pickupTime && isPickupTooEarly(pickupDate, pickupTime)) {
       newErrors.pickupTime =
-        "Pickup must be 1+ minutes ahead";
+        "Pickup must be 10+ minutes ahead";
     }
 
     if (!isMinimumDuration(pickupDate, pickupTime, returnDate, returnTime)) {
