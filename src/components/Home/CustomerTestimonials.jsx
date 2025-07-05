@@ -17,7 +17,7 @@ export default function CustomerTestimonials() {
   useEffect(() => {
     if (reviewData?.data?.reviews) {
       const formattedReviews = reviewData.data.reviews.map(review => ({
-        name: review.clientEmail.split('@')[0].replace('.', ' ').split(' ').map(word =>
+        name: review?.clientEmail?.split('@')[0].replace('.', ' ').split(' ').map(word =>
           word.charAt(0).toUpperCase() + word.slice(1)
         ).join(' '),
         rating: review.rating,
@@ -160,7 +160,7 @@ export default function CustomerTestimonials() {
           className="w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-md"
           style={{ backgroundColor: testimonial.avatarColor }}
         >
-          {testimonial.name.charAt(0)}
+          {testimonial?.name?.charAt(0)}
         </div>
         <div className="flex-1">
           <StarRating rating={testimonial.rating} />
