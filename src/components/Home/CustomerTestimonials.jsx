@@ -10,23 +10,36 @@ export default function CustomerTestimonials() {
   const [slidesPerView, setSlidesPerView] = useState(2);
   const swiperRef = useRef(null);
   const [page] = useState(1);
+  const [expandedCards, setExpandedCards] = useState({});
 
   const { data: reviewData, isLoading } = useGetReviewsQuery(page);
+
+  // Function to truncate the comment to 10 words
+  const truncateComment = (comment) => {
+    const words = comment.split(' ');
+    if (words.length > 10) {
+      return words.slice(0, 10).join(' ') + '...';
+    }
+    return comment;
+  };
+
+  const handleSeeMore = (id) => {
+    setExpandedCards(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
 
   // Format API data
   useEffect(() => {
     if (reviewData?.data?.reviews) {
-      const formattedReviews = reviewData.data.reviews.map(review => ({
-        name: review?.clientEmail?.split('@')[0].replace('.', ' ').split(' ').map(word =>
-          word.charAt(0).toUpperCase() + word.slice(1)
-        ).join(' '),
-        rating: review.rating,
-        text: review.comment,
-        title: "Satisfied Client",
-        avatarColor: getRandomColor(),
-        createdAt: review.createdAt
-      }));
-      setTestimonials(formattedReviews);
+      setTestimonials(reviewData?.data?.reviews);
+      // Initialize all cards as not expanded
+      const initialExpandedState = {};
+      reviewData.data.reviews.forEach(review => {
+        initialExpandedState[review._id] = false;
+      });
+      setExpandedCards(initialExpandedState);
     }
   }, [reviewData]);
 
@@ -153,27 +166,39 @@ export default function CustomerTestimonials() {
     </div>
   );
 
-  const TestimonialCard = ({ testimonial }) => (
-    <div className="bg-white rounded-lg shadow-md hover:shadow-lg p-6 h-full transition-all duration-300">
-      <div className="flex items-start gap-4 mb-4">
-        <div
-          className="w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-md"
-          style={{ backgroundColor: testimonial.avatarColor }}
-        >
-          {testimonial?.name?.charAt(0)}
+  const TestimonialCard = ({ testimonial }) => {
+    return (
+      <div className="bg-white rounded-lg shadow-md hover:shadow-lg p-6 h-full transition-all duration-300">
+        <div className="flex items-start gap-4 mb-4">
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center bg-amber-200 text-black text-xl font-bold shadow-md"
+          >
+            <h3 className=''>{testimonial?.clientName?.charAt(0, 5)}</h3>
+          </div>
+          <div className="flex-1">
+            <StarRating rating={testimonial.rating} />
+            <h4 className="font-semibold mt-1 text-gray-900">{testimonial.clientName}</h4>
+            <p className="text-sm text-gray-500">{testimonial.title}</p>
+          </div>
         </div>
-        <div className="flex-1">
-          <StarRating rating={testimonial.rating} />
-          <h4 className="font-semibold mt-1 text-gray-900">{testimonial.name}</h4>
-          <p className="text-sm text-gray-500">{testimonial.title}</p>
-        </div>
+        <p className="text-gray-700 mb-3">
+          {expandedCards[testimonial._id] ? testimonial.comment : truncateComment(testimonial.comment)}
+          {testimonial.comment.split(' ').length > 10 && (
+            <button
+              className="text-sm text-blue-500 cursor-pointer"
+              onClick={() => handleSeeMore(testimonial._id)}
+            >
+              {expandedCards[testimonial._id] ? 'Show Less' : 'See More'}
+            </button>
+          )}
+        </p>
+
+        <p className="text-xs text-gray-400">
+          {new Date(testimonial.createdAt).toLocaleDateString()}
+        </p>
       </div>
-      <p className="text-gray-700 mb-3">{testimonial.text}</p>
-      <p className="text-xs text-gray-400">
-        {new Date(testimonial.createdAt).toLocaleDateString()}
-      </p>
-    </div>
-  );
+    )
+  }
 
   if (isLoading) {
     return (
