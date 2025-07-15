@@ -40,6 +40,8 @@ export default function CarRental() {
     page: currentPage
   });
 
+  console.log(data?.data.result)
+
   const { data: seatDoorLuggageBrands, isLoading: seatDoorLuggageBrandsLoading } = useSeatDoorLuggageBrandsQuery();
   const router = useRouter();
 
@@ -53,8 +55,11 @@ export default function CarRental() {
   }, []);
 
   const filteredVehicles = data?.data?.result?.filter(vehicle => {
+    // Convert dailyRate if needed (e.g., from cents to dollars)
+    const dailyRate = vehicle.dailyRate / 100; // Remove this if already in correct units
+
     if (filters.transmission &&
-      vehicle.transmissionType.toLowerCase() !== filters.transmission.toLowerCase()) {
+      vehicle.transmissionType?.toLowerCase() !== filters.transmission.toLowerCase()) {
       return false;
     }
 
@@ -62,7 +67,8 @@ export default function CarRental() {
       return false;
     }
 
-    if (vehicle.dailyRate < filters.priceRange[0] || vehicle.dailyRate > filters.priceRange[1]) {
+    if (dailyRate < filters.priceRange[0] || dailyRate > filters.priceRange[1]) {
+      console.log(`Price mismatch: ${dailyRate} not in [${filters.priceRange[0]}, ${filters.priceRange[1]}]`);
       return false;
     }
 
@@ -74,12 +80,16 @@ export default function CarRental() {
       return false;
     }
 
-    if (filters.brands.length > 0 && !filters.brands.includes(vehicle.brand)) {
+    if (filters.brands.length > 0 && !filters.brands.some(b => b.toLowerCase() === vehicle.brand?.toLowerCase())) {
       return false;
     }
 
     return true;
   }) || [];
+
+
+  console.log(filteredVehicles)
+
 
   const handleTransmissionChange = (e) => {
     setFilters({ ...filters, transmission: e.target.value });
@@ -426,7 +436,7 @@ export default function CarRental() {
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {filteredVehicles.map((vehicle) => (
+                {filteredVehicles?.map((vehicle) => (
                   <div key={vehicle._id} className="mb-8">
                     <Card
                       hoverable
