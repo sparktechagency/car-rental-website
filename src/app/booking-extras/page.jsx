@@ -7,11 +7,11 @@ import {
 } from "@ant-design/icons";
 import { Alert, Button, Spin } from "antd";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useState } from "react";
 import { baseURL } from "../../../utils/BaseURL";
-import { useGetAllExtraServiceQuery } from "../../features/reservation_page/reservationApi";
 import CustomLoading from '../../components/CustomLoading';
+import { useGetExtraServicesofvehiclebyvehicleidQuery } from "../../features/reservation_page/reservationApi";
 
 // Utility functions
 const formatCurrency = (amount) => {
@@ -226,7 +226,11 @@ AddonCard.displayName = "AddonCard";
 
 // Main Component
 export default function BookingExtras() {
+
   const router = useRouter();
+
+
+
   const [reservation, setReservation] = useState([]);
   const [isClient, setIsClient] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -335,11 +339,16 @@ export default function BookingExtras() {
     loadReservationAndLocations();
   }, []);
 
+
+  const searchParams = useSearchParams();
+  const valid = searchParams.get('valid');
+
   const {
     data: servicesData,
     isLoading: servicesLoading,
     error: servicesError,
-  } = useGetAllExtraServiceQuery();
+  } = useGetExtraServicesofvehiclebyvehicleidQuery(valid, { skip: !valid });
+
 
   const handleExtraService = useCallback(
     (isAdded, price, quantity, serviceName, isPerDay, serviceId) => {

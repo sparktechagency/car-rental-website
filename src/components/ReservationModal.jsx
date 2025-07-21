@@ -25,10 +25,10 @@ const ReservationModal = ({
   locationsData,
   locationsLoading,
   onSubmit,
-  isloading,
+  isloading
 }) => {
   const now = dayjs();
-  const defaultReturnTime = now.add(3, "hour");
+  const defaultReturnTime = now.add(1, "hour");
 
   const [sameLocation, setSameLocation] = useState(true);
   const [pickupLocationId, setPickupLocationId] = useState("");
@@ -151,7 +151,7 @@ const ReservationModal = ({
       const pickupDateTime = dayjs(date)
         .hour(pickupTime.hour())
         .minute(pickupTime.minute());
-      const returnDateTime = pickupDateTime.add(3, "hour");
+      const returnDateTime = pickupDateTime.add(1, "hour");
       setReturnDate(returnDateTime);
       setReturnTime(returnDateTime);
     } else if (date && !returnDate) {
@@ -178,7 +178,7 @@ const ReservationModal = ({
       const pickupDateTime = dayjs(pickupDate)
         .hour(time.hour())
         .minute(time.minute());
-      const returnDateTime = pickupDateTime.add(3, "hour");
+      const returnDateTime = pickupDateTime.add(1, "hour");
       setReturnDate(returnDateTime);
       setReturnTime(returnDateTime);
     }
@@ -214,7 +214,7 @@ const ReservationModal = ({
       .hour(returnTime.hour())
       .minute(returnTime.minute());
     const diffInHours = returnDateTime.diff(pickup, "hour", true);
-    return diffInHours >= 3;
+    return diffInHours >= 1;
   };
 
   const validateForm = () => {
@@ -265,7 +265,7 @@ const ReservationModal = ({
       returnTime &&
       !isMinimumDuration(pickupDate, pickupTime, returnDate, returnTime)
     ) {
-      newErrors.returnTime = "Minimum reservation length is 3 hours";
+      newErrors.returnTime = "Minimum reservation length is 1 hours";
       valid = false;
     }
 
@@ -324,7 +324,7 @@ const ReservationModal = ({
       return { disabledHours: () => [], disabledMinutes: () => [] };
     }
     if (returnDate.isSame(pickupDate, "day")) {
-      const minReturnTime = pickupTime.add(3, "hour");
+      const minReturnTime = pickupTime.add(1, "hour");
       const minHour = minReturnTime.hour();
       const minMinute = minReturnTime.minute();
       return {

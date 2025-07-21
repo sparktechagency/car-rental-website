@@ -17,12 +17,16 @@ import {
   Spin
 } from 'antd';
 import { Calendar, MapPin } from "lucide-react";
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { baseURL } from '../../../utils/BaseURL';
 import { useGetAllVehiclesQuery, useSeatDoorLuggageBrandsQuery } from '../../features/reservation_page/reservationApi';
 
 export default function CarRental() {
+  const searchParams = useSearchParams();
+  const returnTime = searchParams.get('returnTime');
+  const pickupTime = searchParams.get('pickupTime');
+
   const [reservation, setReservation] = useState([]);
   const [filters, setFilters] = useState({
     transmission: '',
@@ -36,11 +40,12 @@ export default function CarRental() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const { data, isLoading, error, refetch } = useGetAllVehiclesQuery({
-    searchTerm: filters.searchTerm,
-    page: currentPage
+    pickupTime,
+    returnTime
   });
 
-  console.log(data?.data.result)
+
+
 
   const { data: seatDoorLuggageBrands, isLoading: seatDoorLuggageBrandsLoading } = useSeatDoorLuggageBrandsQuery();
   const router = useRouter();
@@ -54,9 +59,8 @@ export default function CarRental() {
     }
   }, []);
 
-  const filteredVehicles = data?.data?.result?.filter(vehicle => {
-    // Convert dailyRate if needed (e.g., from cents to dollars)
-    const dailyRate = vehicle.dailyRate / 100; // Remove this if already in correct units
+  const filteredVehicles = data?.data?.availableVehicleList?.filter(vehicle => {
+    const dailyRate = vehicle.dailyRate / 100;
 
     if (filters.transmission &&
       vehicle.transmissionType?.toLowerCase() !== filters.transmission.toLowerCase()) {
@@ -68,7 +72,6 @@ export default function CarRental() {
     }
 
     if (dailyRate < filters.priceRange[0] || dailyRate > filters.priceRange[1]) {
-      console.log(`Price mismatch: ${dailyRate} not in [${filters.priceRange[0]}, ${filters.priceRange[1]}]`);
       return false;
     }
 
@@ -86,10 +89,6 @@ export default function CarRental() {
 
     return true;
   }) || [];
-
-
-  console.log(filteredVehicles)
-
 
   const handleTransmissionChange = (e) => {
     setFilters({ ...filters, transmission: e.target.value });
@@ -139,7 +138,7 @@ export default function CarRental() {
         localStorage.setItem('reservation', JSON.stringify(updatedData));
       }
     }
-    router.push('/booking-extras');
+    router.push(`/booking-extras?valid=${vehicle?._id}`);
   };
 
   const formatDate = (dateTimeString) => {
@@ -196,7 +195,6 @@ export default function CarRental() {
 
   const currentVehicle = reservation.length > 0 ? reservation[0] : {};
 
-  // Collapse items configuration
   const collapseItems = [
     {
       key: 'price',

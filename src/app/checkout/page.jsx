@@ -29,7 +29,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { baseURL } from "../../../utils/BaseURL";
 import CustomLoading from '../../components/CustomLoading';
-import { useCreatingBookingMutation } from "../../features/reservation_page/reservationApi";
+import { useCreatingBookingMutation, useGetVatQuery } from "../../features/reservation_page/reservationApi";
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -54,6 +54,8 @@ const calculateDaysDifference = (startDate, endDate) => {
 
 export default function Checkout() {
   const [createBooking, { isLoading }] = useCreatingBookingMutation();
+  const { data: vatData } = useGetVatQuery(); // Changed variable name to avoid conflict
+
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm();
   const router = useRouter();
@@ -66,7 +68,7 @@ export default function Checkout() {
   const [carRentalFee, setCarRentalFee] = useState(0);
   const [extrasPrice, setExtrasPrice] = useState(0);
   const [subtotal, setSubtotal] = useState(0);
-  const [vat, setVat] = useState(0);
+  const [vatAmount, setVatAmount] = useState(0); // Changed variable name
   const [total, setTotal] = useState(0);
 
   // Load reservation data from localStorage
@@ -75,12 +77,18 @@ export default function Checkout() {
     if (reservationData) {
       const parsedReservation = JSON.parse(reservationData);
       setReservation(parsedReservation);
-      calculatePrices(parsedReservation);
     }
   }, []);
 
+  // Recalculate prices when reservation or VAT data changes
+  useEffect(() => {
+    if (reservation.length > 0 && vatData?.data) {
+      calculatePrices(reservation);
+    }
+  }, [reservation, vatData]);
+
   const calculatePrices = (reservationData) => {
-    if (!reservationData || reservationData.length === 0) return;
+    if (!reservationData || reservationData.length === 0 || !vatData?.data) return;
 
     const item = reservationData[0];
     const days = calculateDaysDifference(item.pickupDate, item.returnDate);
@@ -106,14 +114,17 @@ export default function Checkout() {
     }
     setExtrasPrice(extrasTotal);
 
-    // Calculate subtotal, VAT, and total
+    // Calculate subtotal
     const newSubtotal = carFee + extrasTotal;
     setSubtotal(newSubtotal);
 
-    const newVat = newSubtotal * 0.075;
-    setVat(newVat);
+    // Calculate VAT using dynamic rate from API
+    const vatRate = parseFloat(vatData.data) / 100; // Convert percentage to decimal
+    const newVatAmount = newSubtotal * vatRate;
+    setVatAmount(newVatAmount);
 
-    const newTotal = newSubtotal + newVat;
+    // Calculate total
+    const newTotal = newSubtotal + newVatAmount;
     setTotal(newTotal);
   };
 
@@ -183,7 +194,6 @@ export default function Checkout() {
 
     localStorage.setItem("reservation", JSON.stringify(updatedReservation));
     setReservation(updatedReservation);
-    calculatePrices(updatedReservation);
     setIsModalOpen(false);
   };
 
@@ -302,9 +312,8 @@ export default function Checkout() {
           lastName: values.lastName.trim(),
           email: values.email.trim(),
           phone: phoneNumber.trim(),
-          parmanentAddress: values.address.trim(),
-          country: values.country.trim(),
-          presentAddress: values.addressLine2.trim(),
+          address: values.address?.trim() || '',
+          country: values.country,
           state: values.state.trim(),
           postCode: values.postcode.trim(),
         },
@@ -312,6 +321,8 @@ export default function Checkout() {
       };
 
       const response = await createBooking(bookingPayload).unwrap();
+
+      console.log(response)
       localStorage.setItem("bookingId", item._id);
       router.push(`${response?.data?.url}`);
     } catch (error) {
@@ -351,8 +362,8 @@ export default function Checkout() {
             <div className="mb-4">
               <p className="font-semibold mb-2">Pick-up</p>
               <div
-                className="flex items-center mb-2 cursor-pointer hover:bg-gray-50 p-2 rounded"
-                onClick={() => showModal('pickup')}
+                className="flex items-center mb-2 p-2 rounded"
+              // onClick={() => showModal('pickup')}
               >
                 <EnvironmentOutlined className="mt-1 mr-2 text-gray-500" />
                 <div>
@@ -367,8 +378,8 @@ export default function Checkout() {
             <div className="mb-6">
               <p className="font-semibold mb-2">Return</p>
               <div
-                className="flex items-center mb-2 cursor-pointer hover:bg-gray-50 p-2 rounded"
-                onClick={() => showModal('return')}
+                className="flex items-center mb-2 p-2 rounded"
+              // onClick={() => showModal('return')}
               >
                 <EnvironmentOutlined className="mt-1 mr-2 text-gray-500" />
                 <div>
@@ -449,8 +460,11 @@ export default function Checkout() {
                 <span>₦{subtotal.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span>VAT (7.5%)</span>
-                <span>₦{vat.toFixed(2)}</span>
+                <span>VAT ({vatData?.data || 0}%)</span>
+                <span>₦{vatAmount.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}</span>
               </div>
               <Divider className="my-2" />
               <div className="flex justify-between font-bold">
@@ -529,15 +543,15 @@ export default function Checkout() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Form.Item
                     name="address"
-                    label="Permanent Address"
-                    rules={[{ required: true }]}
+                    label="Address"
+                  // rules={[{ required: true }]}
                   >
                     <Input placeholder="Enter your permanent address" />
                   </Form.Item>
                   <Form.Item
                     name="country"
                     label="Country"
-                    rules={[{ required: true }]}
+                  // rules={[{ required: true }]}
                   >
                     <Select placeholder="-- Select Country --">
                       <Option value="nigeria">Nigeria</Option>
@@ -550,17 +564,17 @@ export default function Checkout() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Form.Item
+                  {/* <Form.Item
                     name="addressLine2"
                     label="Present Address"
-                    rules={[{ required: true }]}
+                    // rules={[{ required: true }]}
                   >
                     <Input placeholder="Enter your present address" />
-                  </Form.Item>
+                  </Form.Item> */}
                   <Form.Item
                     name="state"
                     label="Region/State"
-                    rules={[{ required: true }]}
+                  // rules={[{ required: true }]}
                   >
                     <Input placeholder="Enter your region/state" />
                   </Form.Item>
@@ -570,7 +584,7 @@ export default function Checkout() {
                   <Form.Item
                     name="postcode"
                     label="Postcode/ZIP Code"
-                    rules={[{ required: true }]}
+                  // rules={[{ required: true }]}
                   >
                     <Input placeholder="Enter your postcode" />
                   </Form.Item>
@@ -598,7 +612,6 @@ export default function Checkout() {
                 <Form.Item name="paymentMethod" rules={[{ required: true }]}>
                   <Select placeholder="Select Payment Method">
                     <Option value="STRIPE">STRIPE</Option>
-                    <Option value="BANK">BANK</Option>
                   </Select>
                 </Form.Item>
               </div>

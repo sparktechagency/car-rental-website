@@ -5,9 +5,13 @@ import { baseApi } from "../../../utils/apiBaseQuery";
 export const ReservationApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getAllVehicles: builder.query({
-      query: (searchTerm = "", page = 1, limit = 9) => ({
-        url: `/vehicle?searchTerm=${searchTerm}&page=${page}`,
+      query: ({ pickupTime, returnTime }) => ({
+        url: `/booking/get-available-vehicle`,
         method: "GET",
+        params: {
+          ...(pickupTime && { pickupTime }),
+          ...(returnTime && { returnTime })
+        }
       }),
       providesTags: ["reservation"],
     }),
@@ -15,6 +19,16 @@ export const ReservationApi = baseApi.injectEndpoints({
     seatDoorLuggageBrands: builder.query({
       query: () => ({
         url: `/vehicle/seat-door-luggage-brands`,
+        method: "GET",
+      }),
+      providesTags: ["reservation"],
+    }),
+
+
+
+    getExtraServicesofvehiclebyvehicleid: builder.query({
+      query: (id) => ({
+        url: `/vehicle/extra-services/${id}`,
         method: "GET",
       }),
       providesTags: ["reservation"],
@@ -37,8 +51,16 @@ export const ReservationApi = baseApi.injectEndpoints({
       providesTags: ["reservation"],
     }),
 
+
+    getVat: builder.query({
+      query: () => ({
+        url: `/company-cms/default-vat-percent`,
+        method: "GET",
+      }),
+      providesTags: ["reservation"],
+    }),
   }),
-  overrideExisting: false,
+  overrideExisting: true
 });
 
 // Export hooks
@@ -46,5 +68,7 @@ export const {
   useGetAllVehiclesQuery,
   useSeatDoorLuggageBrandsQuery,
   useGetAllExtraServiceQuery,
-  useCreatingBookingMutation
+  useCreatingBookingMutation,
+  useGetExtraServicesofvehiclebyvehicleidQuery,
+  useGetVatQuery
 } = ReservationApi;

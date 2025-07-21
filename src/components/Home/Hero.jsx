@@ -29,10 +29,11 @@ const Hero = () => {
     returnLocationId: "",
     returnLocationName: "",
     pickupDate: dayjs(),
-    returnDate: dayjs().add(3, "hour"),
+    returnDate: dayjs().add(1, "hour"),
     pickupTime: dayjs().add(1, "minute"),
-    returnTime: dayjs().add(3, "hour"),
+    returnTime: dayjs().add(1, "hour"),
   });
+
 
   const [customInputs, setCustomInputs] = useState({
     pickup: { show: false, value: "" },
@@ -65,7 +66,7 @@ const Hero = () => {
     const returnDateTime = dayjs(returnDate)
       .hour(returnTime.hour())
       .minute(returnTime.minute());
-    return returnDateTime.diff(pickup, "hour", true) >= 3;
+    return returnDateTime.diff(pickup, "hour", true) >= 1;
   };
 
   // Update form data helper
@@ -80,7 +81,7 @@ const Hero = () => {
       const pickupDateTime = dayjs(date)
         .hour(time.hour())
         .minute(time.minute());
-      const returnDateTime = pickupDateTime.add(3, "hour");
+      const returnDateTime = pickupDateTime.add(1, "hour");
       updateFormData({
         pickupDate: date,
         pickupTime: time,
@@ -191,7 +192,7 @@ const Hero = () => {
     }
 
     if (!isMinimumDuration(pickupDate, pickupTime, returnDate, returnTime)) {
-      newErrors.returnTime = "Minimum reservation 3 hours";
+      newErrors.returnTime = "Minimum reservation 1 hours";
     }
 
     if (returnDate?.isBefore(pickupDate)) {
@@ -222,7 +223,7 @@ const Hero = () => {
     setTimeout(() => {
       localStorage.setItem("reservation", JSON.stringify([reservationData]));
       setIsLoading(false);
-      router.push("/Reservation");
+      router.push(`/Reservation?returnTime=${formData.returnTime.toISOString()}&pickupTime=${formData.pickupTime.toISOString()}`);
     }, 1500);
   };
 
@@ -268,7 +269,7 @@ const Hero = () => {
       return { disabledHours: () => [], disabledMinutes: () => [] };
     }
 
-    const minReturnTime = pickupTime.add(3, "hour");
+    const minReturnTime = pickupTime.add(1, "hour");
     const minHour = minReturnTime.hour();
     const minMinute = minReturnTime.minute();
 

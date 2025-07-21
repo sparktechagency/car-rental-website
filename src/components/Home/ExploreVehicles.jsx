@@ -78,7 +78,7 @@ export default function ExploreVehicles() {
 
       setTimeout(() => {
         setIsloading(false);
-        router.push('/booking-extras');
+        router.push(`/booking-extras?valid=${reservationData?.vehicle._id}`);
       }, 1000);
       // Close modal
       // setIsModalOpen(false);

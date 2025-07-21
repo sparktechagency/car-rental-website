@@ -19,6 +19,7 @@ export default function Fleet() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isloading, setIsloading] = useState(false);
   const searchInputRef = useRef(null);
+
   const router = useRouter();
 
   // API queries
@@ -114,7 +115,7 @@ export default function Fleet() {
     setIsloading(false);
     // setIsModalOpen(false);
     setTimeout(() => {
-      router.push("/booking-extras");
+      router.push(`/booking-extras?valid=${values?.vehicle._id}`);
     }, 1000);
   };
 
